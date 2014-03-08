@@ -774,9 +774,10 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 				if(Math.abs(amigos.get(j).getAngle()-enemigoMascercano.getAngle())<=1)//si estan en el mismo ángulo de tiro o con un grado de diferencia
 					                                                                  
 				{
-					if(this.distanciaManhattan(this.m_Movement.getPosition(),amigos.get(j))<distanciaMenor)//y ademas está a una distancia menor que el agente enmigo
+					if(this.distanciaManhattan(this.m_Movement.getPosition(),amigos.get(j))<=distanciaMenor)//y ademas está a una distancia menor que el agente enmigo
                                                                                                           //No se dispara por peligro de fuego amigo
 					bfuegoAmigo=true;
+					
 				}
 			}
 			if(!bfuegoAmigo)// si no hay ningún amigo en mismo o +1 ángulo y más cerca que el enemigo se dispara
