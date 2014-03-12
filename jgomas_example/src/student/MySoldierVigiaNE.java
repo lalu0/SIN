@@ -23,20 +23,43 @@ public class MySoldierVigiaNE extends CSoldier{
 	private boolean bHeVuelto=false;
 	private Vector3D posBandera=new Vector3D();
 	private boolean bBanderaCogida=false;
-	protected void setup() {		
-		AddServiceType("Mensajero");
+	//Lista de los AID de agentes que se suscriben al servicio Vigia
+	private Vector<AID> nvList;
 
+	
+	/* (non-Javadoc)
+	 * @see es.upv.dsic.gti_ia.jgomas.CSoldier#setup()
+	 */
+	protected void setup() {		
+		//AddServiceType("Mensajero");
+		AddServiceType("Vigia");
+		//Inicializo la lista de los agentes que se suscriben al servicio Vigia
+		 nvList=new Vector<AID>();
 		super.setup();
 		SetUpPriorities();
 		
-		//cojo la posición de la bandera
+		//cojo la posición inicial de la bandera
 		posBandera.x=m_Map.GetTargetX();
 		posBandera.y=m_Map.GetTargetY();
 		posBandera.z=m_Map.GetTargetZ();
-
+        // espera un mensaje de tipo request cuando lo recibe me guardo el AID del agente que lo ha solicitado
+		//que serán de mi mismo equipo
+		addBehaviour(new CyclicBehaviour(){
+			public void action(){
+				MessageTemplate template = MessageTemplate.and(
+						MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+						MessageTemplate.MatchConversationId("AFV"));
+				ACLMessage msgAFV = receive(template);
+				if(msgAFV != null){
+					AID owner =msgAFV.getSender();
+					addNV(owner);
+				}
+			}
+		});
+		/*
 		m_AidListaMensajeros = new Vector<AID>();
 		buscarMensajeros();
-
+     
 		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos
 			public void action(){
 				MessageTemplate template = MessageTemplate.and(
@@ -48,9 +71,14 @@ public class MySoldierVigiaNE extends CSoldier{
 					mensajeRecibido(msg);
 				}
 			}
-		});		
+		});	
+		*/	
 	}
-
+	protected void addNV(AID nv){
+		System.out.println("añado un vigia "+nv.getLocalName());
+		nvList.add(nv);
+	}
+/*
 	void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		for (int i = 0;i<m_AidListaMensajeros.size();i++){
@@ -86,6 +114,7 @@ public class MySoldierVigiaNE extends CSoldier{
 	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
 
 	}
+	*/
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Methods to overload inherited from CTroop class
