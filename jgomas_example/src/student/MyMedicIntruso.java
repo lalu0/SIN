@@ -47,11 +47,14 @@ public class MyMedicIntruso extends CMedic {
 	private int iterShouldUpdateTarget=0;
 	private boolean bTengoBandera=false;
 	private boolean bNecesitoMedicina=false;
+	
+	private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
    
 	/* (non-Javadoc)
 	 * @see es.upv.dsic.gti_ia.jgomas.CMedic#setup()
 	 */
 	protected void setup() {
+		AddServiceType("Mensajero");//Me añado como mensajero para que me envien mensajes
 
 		super.setup();
 		SetUpPriorities();
@@ -61,6 +64,24 @@ public class MyMedicIntruso extends CMedic {
 	//addBehaviour(new BehaviourAleatorio(this));
 	//addBehaviour(new BehaviourSeguirAliado(this));
 		
+		m_AidListaMensajeros = new Vector<AID>(); //Inicializo lista de mensajeros
+		buscarMensajeros();
+		
+		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
+			public void action(){
+				MessageTemplate template = MessageTemplate.and(
+						MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+						MessageTemplate.MatchConversationId("MS"));
+				ACLMessage msg = receive(template);
+				if(msg != null){
+					AID owner =msg.getSender();
+					mensajeRecibido(msg);
+				}
+			}
+		});		
+
+		
+	}
 		
 	}
 	
@@ -169,6 +190,53 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
     	
     	
     }
+    
+    /**
+     * Este método realiza el envío de mensajes en forma de String
+     */
+    void enviarMensaje(String mensaje){
+		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+		for (int i = 0;i<m_AidListaMensajeros.size();i++){
+			msg.addReceiver(m_AidListaMensajeros.elementAt(i));
+		}
+		msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+		msg.setConversationId("MS");
+		msg.setContent(mensaje);
+		send(msg);
+		System.out.println(getLocalName()+ ": Ha enviado un mensaje: "+mensaje);  		
+	}
+	/**
+	 * Este método implementa la búsqueda de mensajeros, para luego comunicarme con ellos (en principio todo el equipo)
+	 * Estos mensajes serán para protocolos como el aviso de que he muerto con la bandera o de que tengo la bandera
+	 *  y hay que cambiar la estrategia
+	 */
+	void buscarMensajeros(){
+		try {
+			DFAgentDescription dfd = new DFAgentDescription();
+			ServiceDescription sd = new ServiceDescription();
+			sd.setType("Mensajero_Axis");
+			dfd.addServices(sd);
+			DFAgentDescription[] result = DFService.search(this, dfd);
+			if ( result.length > 0 ) {
+				for ( int i = 0; i < result.length; i++ ) {
+					DFAgentDescription dfdMensajero = result[i];
+					AID mensajero = dfdMensajero.getName();
+					if ( ! mensajero.equals(getName()) )
+						m_AidListaMensajeros.add(mensajero);					
+				}
+			} 
+		} catch (FIPAException fe) {
+			fe.printStackTrace();
+		}
+	}
+	
+	/**
+	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
+	 */
+	void mensajeRecibido(ACLMessage msg){
+		
+	}
+    
     /*
     protected Agent getAgentForName(String name)
     {

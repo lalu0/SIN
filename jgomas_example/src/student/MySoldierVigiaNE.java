@@ -23,8 +23,11 @@ public class MySoldierVigiaNE extends CSoldier{
 	private boolean bHeVuelto=false;
 	private Vector3D posBandera=new Vector3D();
 	private boolean bBanderaCogida=false;
-	protected void setup() {		
-		AddServiceType("Mensajero");
+	
+	private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
+	
+	protected void setup() {
+		AddServiceType("Mensajero");//Me añado como mensajero para que me envien mensajes
 
 		super.setup();
 		SetUpPriorities();
@@ -51,7 +54,10 @@ public class MySoldierVigiaNE extends CSoldier{
 		});		
 	}
 
-	void enviarMensaje(String mensaje){
+	/**
+     * Este método realiza el envío de mensajes en forma de String
+     */
+    void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		for (int i = 0;i<m_AidListaMensajeros.size();i++){
 			msg.addReceiver(m_AidListaMensajeros.elementAt(i));
@@ -62,7 +68,11 @@ public class MySoldierVigiaNE extends CSoldier{
 		send(msg);
 		System.out.println(getLocalName()+ ": Ha enviado un mensaje: "+mensaje);  		
 	}
-
+	/**
+	 * Este método implementa la búsqueda de mensajeros, para luego comunicarme con ellos (en principio todo el equipo)
+	 * Estos mensajes serán para protocolos como el aviso de que he muerto con la bandera o de que tengo la bandera
+	 *  y hay que cambiar la estrategia
+	 */
 	void buscarMensajeros(){
 		try {
 			DFAgentDescription dfd = new DFAgentDescription();
@@ -82,9 +92,12 @@ public class MySoldierVigiaNE extends CSoldier{
 			fe.printStackTrace();
 		}
 	}
-
-	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
-
+	
+	/**
+	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
+	 */
+	void mensajeRecibido(ACLMessage msg){
+		
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
