@@ -49,6 +49,9 @@ public class MyMedicIntruso extends CMedic {
 	private boolean bTengoBandera=false;
 	private boolean bNecesitoMedicina=false;
 	
+	private int iAmmoThreshold = 50;
+	private int iHealthThreshold = 50;
+	
 	private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
    
 	/* (non-Javadoc)
@@ -766,9 +769,12 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	 */
 	protected void PerformThresholdAction() {
 		
-		GenerateEscapePosition();
-		String sNewPosition = " ( " + m_Movement.getDestination().x + " , " + m_Movement.getDestination().y + " , " + m_Movement.getDestination().z + " ) "; 
-		AddTask(CTask.TASK_RUN_AWAY, getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		if (GetAmmo() < iAmmoThreshold) {
+			CallForAmmo();
+		}
+		if (this.GetHealth() < iHealthThreshold) {
+			CallForMedic();
+		}
 		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1006,10 +1012,28 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	//@SuppressWarnings("serial")
 	protected void PerformLookAction() {
 		
+		//Busqueda de packs si los humbrales son bajos
+		if ( !m_FOVObjects.isEmpty() ) {
+			if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
+				Object[] list = m_FOVObjects.toArray();
+				for(int i = 0;i<list.length;i++){
+					CSight s = (CSight)list[i];
+					if ((s.getType() == CPack.PACK_MEDICPACK)&(GetHealth()<iHealthThreshold)) {
+						String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
+						AddTask(CTask.TASK_GOTO_POSITION , this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+						break;
+					}
+					else if ((s.getType() == CPack.PACK_AMMOPACK)&(GetAmmo()<iAmmoThreshold)){
+						String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
+						AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+						break;
+					}
+				}
+			}
+		}		
+		
+		
 		// addBehaviour(new BehaviourSeguirAliado(this));
-		
-		
-		
 		boolean bPartnerFound = false;
 		
 		if ( !m_FOVObjects.isEmpty() ) {
