@@ -770,15 +770,6 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	 *   
 	 */
 	protected void PerformThresholdAction() {
-		
-
-		if (GetAmmo() < iAmmoThreshold) {
-			CallForAmmo();
-		}
-		if (this.GetHealth() < iHealthThreshold) {
-			CallForMedic();
-		}
-		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	

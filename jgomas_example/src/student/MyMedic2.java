@@ -559,15 +559,6 @@ public class MyMedic2 extends CMedic {
 	 *   
 	 */
 	protected void PerformThresholdAction() {
-		
-
-		if (GetAmmo() < iAmmoThreshold) {
-			CallForAmmo();
-		}
-		if (this.GetHealth() < iHealthThreshold) {
-			CallForMedic();
-		}
-		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	
