@@ -66,6 +66,7 @@ public class MySoldierVigiaNE extends CSoldier{
 						}
 					}			
 				});
+<<<<<<< HEAD
 	}
 	/* (non-Javadoc)
 	 * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
@@ -76,6 +77,8 @@ public class MySoldierVigiaNE extends CSoldier{
 			//EnviarMensaje con la posicion
 			enviarMensaje("Bandera "+ m_Movement.getPosition());
 		}
+=======
+>>>>>>> Aumento de la frecuencia de disparos, 2 disparos por cada 100
 	}
 
 	/**

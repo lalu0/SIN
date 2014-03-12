@@ -65,6 +65,7 @@ public class MySoldierVigiaSO extends CSoldier{
 						}
 					}			
 				});
+<<<<<<< HEAD
 	}
 	
 	/* (non-Javadoc)
@@ -76,6 +77,8 @@ public class MySoldierVigiaSO extends CSoldier{
 			//EnviarMensaje con la posicion
 			enviarMensaje("Bandera "+ m_Movement.getPosition());
 		}
+=======
+>>>>>>> Aumento de la frecuencia de disparos, 2 disparos por cada 100
 	}
 
 	/**
