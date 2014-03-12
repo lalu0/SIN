@@ -1,6 +1,7 @@
 package student;
 import jade.core.AID;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -14,7 +15,6 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import es.upv.dsic.gti_ia.jgomas.*;
-import es.upv.dsic.gti_ia.jgomas.CTerrainMap;
 
 public class MySoldierIntruso extends CSoldier{
 	private static final long serialVersionUID = 1L;
@@ -51,7 +51,16 @@ public class MySoldierIntruso extends CSoldier{
 					mensajeRecibido(msg);
 				}
 			}
-		});		
+		});	
+		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
+				SetUpPriorities();
+				addBehaviour(new TickerBehaviour(this,100){
+					public void onTick(){
+						if(GetAgentToAim()){					
+							Shot(2);
+						}
+					}			
+				});
 	}
 
 	/**

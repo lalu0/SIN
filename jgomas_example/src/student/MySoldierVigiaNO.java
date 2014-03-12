@@ -1,6 +1,7 @@
 package student;
 import jade.core.AID;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -50,7 +51,17 @@ public class MySoldierVigiaNO extends CSoldier{
 					mensajeRecibido(msg);
 				}
 			}
-		});		
+		});	
+		
+		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
+				SetUpPriorities();
+				addBehaviour(new TickerBehaviour(this,100){
+					public void onTick(){
+						if(GetAgentToAim()){					
+							Shot(2);
+						}
+					}			
+				});
 	}
 
 	/**

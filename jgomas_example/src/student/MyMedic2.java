@@ -6,6 +6,7 @@ import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -60,7 +61,7 @@ public class MyMedic2 extends CMedic {
 		
 	m_AidListaMensajeros = new Vector<AID>(); //Inicializo lista de mensajeros
 	buscarMensajeros();
-	
+
 	addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
 		public void action(){
 			MessageTemplate template = MessageTemplate.and(
@@ -72,13 +73,22 @@ public class MyMedic2 extends CMedic {
 				mensajeRecibido(msg);
 			}
 		}
-	});		
+	});	
+	//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
+	SetUpPriorities();
+	addBehaviour(new TickerBehaviour(this,100){
+		public void onTick(){
+			if(GetAgentToAim()){					
+				Shot(2);
+			}
+		}			
+	});
 
-	
-}
-		
+
 	}
-	
+
+
+
 	/**
 	 * @author lauenbo
 	 *
@@ -95,13 +105,13 @@ public class MyMedic2 extends CMedic {
 		 * @see jade.core.behaviours.Behaviour#action()
 		 */
 		public void action() {
-			
-			
+
+
 			System.out.println("Position:x:"+m_Movement.getPosition().x + " y: "+m_Movement.getPosition().y+" z: "+m_Movement.getPosition().z);
 			System.out.println("Distance to destination:x:"+( m_Movement.getDestination().x - m_Movement.getPosition().x )+ " y: "+ (m_Movement.getDestination().y - m_Movement.getPosition().y)+ " z: "+(m_Movement.getDestination().z - m_Movement.getPosition().z));
 		}
 
-		
+
 	}
 	
 	/**
