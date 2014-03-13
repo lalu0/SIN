@@ -1,7 +1,6 @@
 package student;
 import jade.core.AID;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -24,26 +23,43 @@ public class MySoldierVigiaNE extends CSoldier{
 	private boolean bHeVuelto=false;
 	private Vector3D posBandera=new Vector3D();
 	private boolean bBanderaCogida=false;
-	
-	private int iAmmoThreshold = 50;
-	private int iHealthThreshold = 50;
-	
-	private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
-	
-	protected void setup() {
-		AddServiceType("Mensajero");//Me añado como mensajero para que me envien mensajes
+	//Lista de los AID de agentes que se suscriben al servicio Vigia
+	private Vector<AID> nvList;
 
+	
+	/* (non-Javadoc)
+	 * @see es.upv.dsic.gti_ia.jgomas.CSoldier#setup()
+	 */
+	protected void setup() {		
+		//AddServiceType("Mensajero");
+		AddServiceType("Vigia");
+		//Inicializo la lista de los agentes que se suscriben al servicio Vigia
+		 nvList=new Vector<AID>();
 		super.setup();
 		SetUpPriorities();
 		
-		//cojo la posición de la bandera
+		//cojo la posición inicial de la bandera
 		posBandera.x=m_Map.GetTargetX();
 		posBandera.y=m_Map.GetTargetY();
 		posBandera.z=m_Map.GetTargetZ();
-
+        // espera un mensaje de tipo request cuando lo recibe me guardo el AID del agente que lo ha solicitado
+		//que serán de mi mismo equipo
+		addBehaviour(new CyclicBehaviour(){
+			public void action(){
+				MessageTemplate template = MessageTemplate.and(
+						MessageTemplate.MatchPerformative(ACLMessage.REQUEST),
+						MessageTemplate.MatchConversationId("AFV"));
+				ACLMessage msgAFV = receive(template);
+				if(msgAFV != null){
+					AID owner =msgAFV.getSender();
+					addNV(owner);
+				}
+			}
+		});
+		/*
 		m_AidListaMensajeros = new Vector<AID>();
 		buscarMensajeros();
-
+     
 		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos
 			public void action(){
 				MessageTemplate template = MessageTemplate.and(
@@ -56,32 +72,14 @@ public class MySoldierVigiaNE extends CSoldier{
 				}
 			}
 		});	
-		
-		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
-				SetUpPriorities();
-				addBehaviour(new TickerBehaviour(this,100){
-					public void onTick(){
-						if(GetAgentToAim()){					
-							Shot(2);
-						}
-					}			
-				});
+		*/	
 	}
-	/* (non-Javadoc)
-	 * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
-	 * Este método se invoca antes de morir, si llevo la bandera aviso
-	 */
-	protected void takeDown(){
-		if(this.m_bObjectiveCarried){
-			//EnviarMensaje con la posicion
-			enviarMensaje("Bandera "+ m_Movement.getPosition());
-		}
+	protected void addNV(AID nv){
+		System.out.println("añado un vigia "+nv.getLocalName());
+		nvList.add(nv);
 	}
-
-	/**
-     * Este método realiza el envío de mensajes en forma de String
-     */
-    void enviarMensaje(String mensaje){
+/*
+	void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		for (int i = 0;i<m_AidListaMensajeros.size();i++){
 			msg.addReceiver(m_AidListaMensajeros.elementAt(i));
@@ -92,11 +90,7 @@ public class MySoldierVigiaNE extends CSoldier{
 		send(msg);
 		System.out.println(getLocalName()+ ": Ha enviado un mensaje: "+mensaje);  		
 	}
-	/**
-	 * Este método implementa la búsqueda de mensajeros, para luego comunicarme con ellos (en principio todo el equipo)
-	 * Estos mensajes serán para protocolos como el aviso de que he muerto con la bandera o de que tengo la bandera
-	 *  y hay que cambiar la estrategia
-	 */
+
 	void buscarMensajeros(){
 		try {
 			DFAgentDescription dfd = new DFAgentDescription();
@@ -116,13 +110,11 @@ public class MySoldierVigiaNE extends CSoldier{
 			fe.printStackTrace();
 		}
 	}
-	
-	/**
-	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
-	 */
-	void mensajeRecibido(ACLMessage msg){
-		
+
+	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
+
 	}
+	*/
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Methods to overload inherited from CTroop class
@@ -630,6 +622,11 @@ public class MySoldierVigiaNE extends CSoldier{
 	 *   
 	 */
 	protected void PerformThresholdAction() {
+
+		GenerateEscapePosition();
+		String sNewPosition = " ( " + m_Movement.getDestination().x + " , " + m_Movement.getDestination().y + " , " + m_Movement.getDestination().z + " ) "; 
+		AddTask(CTask.TASK_RUN_AWAY, getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -861,25 +858,6 @@ public class MySoldierVigiaNE extends CSoldier{
 	 * 
 	 */
 	protected void PerformLookAction() {
-		//Busqueda de packs si los humbrales son bajos
-				if ( !m_FOVObjects.isEmpty() ) {
-					if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
-						Object[] list = m_FOVObjects.toArray();
-						for(int i = 0;i<list.length;i++){
-							CSight s = (CSight)list[i];
-							if ((s.getType() == CPack.PACK_MEDICPACK)&(GetHealth()<iHealthThreshold)) {
-								String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
-								AddTask(CTask.TASK_GOTO_POSITION , this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-								break;
-							}
-							else if ((s.getType() == CPack.PACK_AMMOPACK)&(GetAmmo()<iAmmoThreshold)){
-								String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
-								AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-								break;
-							}
-						}
-					}
-				}		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
