@@ -3,7 +3,6 @@ package student;
 
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.TickerBehaviour;
@@ -14,9 +13,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-
-import javax.swing.text.Position;
 
 import es.upv.dsic.gti_ia.jgomas.CMedic;
 import es.upv.dsic.gti_ia.jgomas.CPack;
@@ -33,7 +31,7 @@ import es.upv.dsic.gti_ia.jgomas.Vector3D;
  *
  */
 
-public class MyMedic2 extends CMedic {
+public class MyMedicIntruso extends CMedic {
 	
 
 	/**
@@ -41,12 +39,20 @@ public class MyMedic2 extends CMedic {
 	 */
 	
 	private static final long serialVersionUID = 1L;
-    private CSight aliadoAseguir=null;
+	private CSight aliadoAseguir=null;
+	private CSight s=null;
+	
+	private Vector3D[] vVolverPath=new Vector3D [1000];
+	private boolean bHeVuelto=false;
     
-    private int iAmmoThreshold = 50;
+	private int iterShouldUpdateTarget=0;
+	private boolean bTengoBandera=false;
+	private boolean bNecesitoMedicina=false;
+	
+	private int iAmmoThreshold = 50;
 	private int iHealthThreshold = 50;
-    
-    private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
+	
+	private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
    
 	/* (non-Javadoc)
 	 * @see es.upv.dsic.gti_ia.jgomas.CMedic#setup()
@@ -59,61 +65,35 @@ public class MyMedic2 extends CMedic {
         
 		
 	//addBehaviour(new myBehaviour(this));
-	addBehaviour(new BehaviourAleatorio(this));
+	//addBehaviour(new BehaviourAleatorio(this));
 	//addBehaviour(new BehaviourSeguirAliado(this));
 		
-	m_AidListaMensajeros = new Vector<AID>(); //Inicializo lista de mensajeros
-	buscarMensajeros();
-
-	addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
-		public void action(){
-			MessageTemplate template = MessageTemplate.and(
-					MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-					MessageTemplate.MatchConversationId("MS"));
-			ACLMessage msg = receive(template);
-			if(msg != null){
-				AID owner =msg.getSender();
-				mensajeRecibido(msg);
+		m_AidListaMensajeros = new Vector<AID>(); //Inicializo lista de mensajeros
+		buscarMensajeros();
+		
+		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
+			public void action(){
+				MessageTemplate template = MessageTemplate.and(
+						MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+						MessageTemplate.MatchConversationId("MS"));
+				ACLMessage msg = receive(template);
+				if(msg != null){
+					AID owner =msg.getSender();
+					mensajeRecibido(msg);
+				}
 			}
-		}
-	});	
-	//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
-	SetUpPriorities();
-	addBehaviour(new TickerBehaviour(this,100){
-		public void onTick(){
-			if(GetAgentToAim()){					
-				Shot(2);
-			}
-		}			
-	});
+		});		
 
 
-	}
-
-
-
-	/**
-	 * @author lauenbo
-	 *
-	 */
-	class myBehaviour extends CyclicBehaviour {	
-		/**
-		 * @param a
-		 */
-		public myBehaviour( Agent a ) {
-			super(a);
-		}
-
-		/* (non-Javadoc)
-		 * @see jade.core.behaviours.Behaviour#action()
-		 */
-		public void action() {
-
-
-			System.out.println("Position:x:"+m_Movement.getPosition().x + " y: "+m_Movement.getPosition().y+" z: "+m_Movement.getPosition().z);
-			System.out.println("Distance to destination:x:"+( m_Movement.getDestination().x - m_Movement.getPosition().x )+ " y: "+ (m_Movement.getDestination().y - m_Movement.getPosition().y)+ " z: "+(m_Movement.getDestination().z - m_Movement.getPosition().z));
-		}
-
+		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
+		SetUpPriorities();
+		addBehaviour(new TickerBehaviour(this,100){
+			public void onTick(){
+				if(GetAgentToAim()){					
+					Shot(2);
+				}
+			}			
+		});
 
 <<<<<<< HEAD
 	}
@@ -136,9 +116,34 @@ public class MyMedic2 extends CMedic {
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Pierdo la bandera "+ m_Movement.getPosition());
+			enviarMensaje("Bandera "+ m_Movement.getPosition());
 		}
 	}
+
+	/**
+	 * @author lauenbo
+	 *
+	 */
+	class myBehaviour extends CyclicBehaviour {	
+		/**
+		 * @param a
+		 */
+		public myBehaviour( Agent a ) {
+			super(a);
+		}
+
+		/* (non-Javadoc)
+		 * @see jade.core.behaviours.Behaviour#action()
+		 */
+		public void action() {
+
+			System.out.println("Position:x:"+m_Movement.getPosition().x + " y: "+m_Movement.getPosition().y+" z: "+m_Movement.getPosition().z);
+			System.out.println("Distance to destination:x:"+( m_Movement.getDestination().x - m_Movement.getPosition().x )+ " y: "+ (m_Movement.getDestination().y - m_Movement.getPosition().y)+ " z: "+(m_Movement.getDestination().z - m_Movement.getPosition().z));
+		}
+		
+	}
+	
+
 	
 	/**
 	 * @author lauenbo
@@ -160,13 +165,14 @@ public class MyMedic2 extends CMedic {
 		    int y =0;
 		    
 		    String sNewPosition=" ( "+ (int) x+" , "+ y+" , "+ (int) z+" ) ";
-		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,2000);	
+		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,1500);	
+		    System.out.println("Mi destino sigue siendo "+m_Movement.getPosition().x+" y la z: "+m_Movement.getPosition().z);
 		}
 	}
 		
 ;
-   class BehaviourSeguirAliado extends OneShotBehaviour {		
-		
+class BehaviourSeguirAliado extends OneShotBehaviour {		
+	
 	   public BehaviourSeguirAliado( Agent a ) {
 			super(a);
 		}
@@ -188,32 +194,22 @@ public class MyMedic2 extends CMedic {
 		    double y =aliadoAseguir.getPosition().y;
 		    
 		    String sNewPosition=" ( "+ (int) x+" , "+ (int) y+" , "+ (int) z+" ) ";
-		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,1500);
+		    System.out.println("Voy a seguir a "+Integer.toString(aliadoAseguir.getTeam()));
+		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,2000);
 			}
 		}
 	}
 		
 ;
 
-/* (non-Javadoc)
- * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
- * Este método se invoca antes de morir, si llevo la bandera aviso
- */
-protected void takeDown(){
-	if(this.m_bObjectiveCarried){
-		//EnviarMensaje con la posicion
-		enviarMensaje("Bandera "+ m_Movement.getPosition());
-	}
-}
-
     protected CSight GetAgenteAliadoASeguir()
     {
     	CSight compi=null;
     	if(!m_FOVObjects.isEmpty())
     	{
-    		Iterator it = m_FOVObjects.iterator(); 
+    		Iterator<?> it = m_FOVObjects.iterator(); 
     		
-    		while(it.hasNext())
+    		while(it.hasNext() && compi==null)
     		{
     		  CSight s=(CSight) it.next();
     		  
@@ -275,7 +271,35 @@ protected void takeDown(){
 	void mensajeRecibido(ACLMessage msg){
 		
 	}
-	
+    
+    /*
+    protected Agent getAgentForName(String name)
+    {
+    	ContainerController cc=new ContainerController()
+    	
+    }
+    */
+    /*
+    protected ArrayList GetAgentTeam()
+    {
+    	
+    	 * 
+    	 * Realmente tiene que devolver un ArrayList
+    	AMSAgentDescription amsAgentDescription = new AMSAgentDescription();
+    
+    	SearchConstraints searchConstraints = new SearchConstraints();
+    	searchConstraints.setMaxResults(new Long("99999"));
+    	               
+    	try {
+    	        Object agentsFound = AMSService.search(configGui.getAgent(),amsAgentDescription,  
+    	searchConstraints);
+    	} catch (FIPAException e) {
+    	        e.printStackTrace();
+    	} 
+    	
+    	;
+    }
+	*/
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Methods to overload inhereted from CTroop class
 	//
@@ -292,47 +316,14 @@ protected void takeDown(){
 	 * Variable <tt> m_iMedicsCount </tt> is updated.
 	 * 
 	 * <em> It's very useful to overload this method. </em>
+	 * Al tratarse de un médico es más eficiente que al pedir vida suelte el paquete en su misma posición él mismo
 	 * 
 	 */
 
 	protected void CallForMedic() {
-
-		try {
-
-			DFAgentDescription dfd = new DFAgentDescription();
-			ServiceDescription sd = new ServiceDescription();
-			sd.setType(m_sMedicService);
-			dfd.addServices(sd);
-			DFAgentDescription[] result = DFService.search(this, dfd);
-
-			if ( result.length > 0 ) {
-
-				m_iMedicsCount = result.length;
-
-				// Fill the REQUEST message
-				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-
-				for ( int i = 0; i < result.length; i++ ) {
-
-					DFAgentDescription dfdMedic = result[i];
-					AID Medic = dfdMedic.getName();
-					if ( ! Medic.equals(getName()) )
-						msg.addReceiver(dfdMedic.getName());
-					else
-						m_iMedicsCount--;
-				}
-				msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-				msg.setConversationId("CFM");
-				msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
-				send(msg);
-				System.out.println(getLocalName()+ ": Need a Medic! (v21)");  			
-
-			} else {
-				m_iMedicsCount = 0;
-			}
-		} catch (FIPAException fe) {
-			fe.printStackTrace();
-		}
+		String miPosicion = " ( " + m_Movement.getPosition().x + " , "+ m_Movement.getPosition().y + " , "+ m_Movement.getPosition().z + " ) ";
+        this.AddTask(CTask.TASK_GIVE_MEDICPAKS, getAID(), miPosicion);//TASK_GIVE_MEDICPAKS debe de tener la mayor prioridad.
+        bNecesitoMedicina=true;//para que esta tarea que es la más prioritaria se ejecute, esto hara que updateTargets devuelva true
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -401,12 +392,26 @@ protected void takeDown(){
 	 * making possible to JGOMAS Kernel extract a more priority task, or update some attributes of the current task.
 	 * By default, the return value is <tt> FALSE</tt>, so we execute the current task until it finalizes.
 	 *   
-	 * <em> It's very useful to overload this method. </em>
+	 * Si tengo la bandera o he pedido medicina o bien cada 10 iteraciones actualiza y coge la tarea más prioritaria
 	 *   
-	 * @return <tt> FALSE</tt> 
+	 * @return true si actualida por tarea más prioritaria o false si no. 
 	 * 
 	 */
-	protected boolean ShouldUpdateTargets() { return false; }  
+	protected boolean ShouldUpdateTargets() 
+	{ 
+		iterShouldUpdateTarget++;
+		if(iterShouldUpdateTarget % 10==0 || bTengoBandera || bNecesitoMedicina)
+		{
+			iterShouldUpdateTarget=0;
+			if(bNecesitoMedicina) bNecesitoMedicina=false;
+			return true;
+			
+		}
+		else
+		{
+			return false;
+		}
+		}  
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -418,10 +423,7 @@ protected void takeDown(){
 	 * <em> It's very useful to overload this method. </em>
 	 *   
 	 */
-	protected void ObjectivePackTaken() {
-		//EnviarMensaje con la posicion
-		enviarMensaje("Cojo la bandera "+ m_Movement.getPosition());		
-	} // Should we do anything when we take the objective pack? 
+	protected void ObjectivePackTaken() {} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -440,7 +442,7 @@ protected void takeDown(){
 		m_TaskPriority[CTask.TASK_GIVE_MEDICPAKS] = 2000;
 		m_TaskPriority[CTask.TASK_GIVE_AMMOPACKS] = 0;
 		m_TaskPriority[CTask.TASK_GIVE_BACKUP] = 0;
-		m_TaskPriority[CTask.TASK_GET_OBJECTIVE] = 1000;
+		m_TaskPriority[CTask.TASK_GET_OBJECTIVE] = 3000;
 		m_TaskPriority[CTask.TASK_ATTACK] = 1000;
 		m_TaskPriority[CTask.TASK_RUN_AWAY] = 1500;
 		m_TaskPriority[CTask.TASK_GOTO_POSITION] = 750;
@@ -497,20 +499,213 @@ protected void takeDown(){
 	 * @return <tt> TRUE</tt>: valid position generated / <tt> FALSE</tt> cannot generate a valid position
 	 * 
 	 */
+	
 	protected boolean GeneratePath() {
+
 		
-		for (int iAttempts = 0; iAttempts < 5; iAttempts++) {
-			m_Movement.CalculateNewDestination(20,20);
-			if ( CheckStaticPosition(m_Movement.getDestination().x, m_Movement.getDestination().z) == true ) {
-				// we must insert a task to go to a new position, so agent will follow previous path
-				String sNewPosition = " ( " + m_Movement.getDestination().x + " , " + m_Movement.getDestination().y + " , " + m_Movement.getDestination().z + " ) "; 
-				AddTask(CTask.TASK_GOTO_POSITION, getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-				return true;
+		bHeVuelto=false;
+		m_iAStarPathIndex=0;//inicilaizamos a 0
+		
+		System.out.println("La posicion inicial por getposition es "+m_Movement.getPosition().x+"y z es "+m_Movement.getPosition().z);
+		
+		Vector3D vNewDestination=new Vector3D(m_Movement.getPosition().x,0.0,m_Movement.getPosition().z);
+		
+		ArrayList<Vector3D> lv3D=new ArrayList<Vector3D>();//para ir metiendo los puntos que luego le pasaré en orden descendente a m_AStarPath
+		ArrayList<Nodo> lAbiertos=new ArrayList<Nodo>();
+		ArrayList<Nodo> lCerrados=new ArrayList<Nodo>();
+		ArrayList<Nodo> lvecinos=new ArrayList<Nodo>();
+		
+		int xInit =(int) Math.floor(m_Movement.getPosition().x);
+		xInit /= 8;
+		int zInit = (int) Math.floor(m_Movement.getPosition().z);
+		zInit /= 8;
+		int xFinal =(int) Math.floor(m_Movement.getDestination().x);
+		xFinal /= 8;
+		int zFinal = (int) Math.floor(m_Movement.getDestination().z);
+		zFinal /= 8;
+		
+		Nodo nodoInit= new Nodo(xInit,zInit,null);
+		Nodo nodoFinal=new Nodo(xFinal,zFinal,null);
+		Nodo nodoActual=null;
+		 lAbiertos.add(nodoInit);// añado el nodo inicial a la lista de abiertos
+		 boolean esNodoFinal=false;
+		 while(!esNodoFinal)    //(!lAbiertos.isEmpty()){
+		 {
+			nodoActual=this.obtenerNodoMejorCoste(lAbiertos,nodoFinal); //obtener el nodo abierto de menor coste
+			for(int i=0;i<lAbiertos.size();i++)
+			{
+				if(nodoActual.comparaEsNodo(lAbiertos.get(i)) )
+				{
+					lAbiertos.remove(i);
+				}
+			}
+			//System.out.println("2 Labiertos tiene"+lAbiertos.size());
+			//lAbiertos.remove(nodoActual);
+			lCerrados.add(nodoActual);
+			if(nodoActual.comparaEsNodo(nodoFinal))
+			{
+				esNodoFinal=true;
+				break;
+				
+			}
+			lvecinos.clear();
+		   lvecinos= this.calcularVecinos(lvecinos,nodoActual);
+		   
+		   lAbiertos= this.actualizarAbiertos(lAbiertos,lCerrados,lvecinos,nodoFinal);	
+		    //System.out.println("Ha entrado en el bucle");
+		    //System.out.println("Nodo Actual x:"+nodoActual.getPosX()+" y posicion z: "+nodoActual.getPosZ());
+		 }
+		 System.out.println("Ha salido");
+		 boolean esInicial=false;
+		 for(int h=0;h<lCerrados.size();h++)
+		 {
+			 if(nodoFinal.comparaEsNodo(lCerrados.get(h)))
+			 {
+				 nodoFinal=lCerrados.get(h);
+			 }
+		 }
+		 Nodo nCurrent=nodoFinal;
+		 Nodo nPadre=null;
+		 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
+		 {
+			 if(nCurrent.getPadre()==null) esInicial=true;
+			 lv3D.add(new Vector3D(nCurrent.getPosX()*8,0,nCurrent.getPosZ()*8));
+			 nCurrent=nCurrent.getPadre();		 
+		 }
+		 Vector3D[] v3D=new Vector3D[lv3D.size()];
+		 Vector3D[] v3DReturn=new Vector3D[1000];
+		 for(int j=lv3D.size()-1;j>=0;j--)
+		 {
+			 //for(int h=0;h<lv3D.size();h++)
+			 //{
+				 
+			 v3D[(lv3D.size()-1)-j]=new Vector3D(lv3D.get(j).x,0.0,lv3D.get(j).z);
+			// v3DReturn[j]=new Vector3D(lv3D.get(j).x,0.0,lv3D.get(j).z);
+			 
+			// }
+		 }
+		// System.out.println(m_Movement.getPosition().x);
+		 //System.out.println(m_Movement.getPosition().z);
+		 double xInicial=lv3D.get(0).x;
+		 double zInicial=lv3D.get(0).z;
+		 
+		 double xINI=v3D[0].x;
+		 double zINI=v3D[0].z;
+		 //this.setvVolverPath(v3DReturn);//Me guardo el vector para volver
+		 
+		 m_AStarPath=v3D;
+		 if (CheckStaticPosition(m_AStarPath[0].x,m_AStarPath[0].z) == true)
+		 {
+		 String posInit = " ( " + m_AStarPath[0].x + " , 0.0 , " + m_AStarPath[0].z + " ) ";
+		 AddTask(CTask.TASK_WALKING_PATH, getAID(), posInit, 10000);
+		 
+		 m_Movement.setDestination(vNewDestination);
+		 System.out.println("la posicion inicial es "+vNewDestination.x +" y la z "+vNewDestination.z);
+		 System.out.println("El destino actual es "+m_Movement.getDestination().x+" y la z "+m_Movement.getDestination().z);
+		 
+		 return true;
+		 }
+		 return false;
+		
+	}
+	
+	protected void setvVolverPath(Vector3D[] v)
+	{
+		this.vVolverPath=v;
+	}
+	protected Vector3D[] getvVolverPath()
+	{
+		return this.vVolverPath;
+	}
+
+	protected Nodo obtenerNodoMejorCoste(ArrayList<Nodo> lAbiertos,Nodo nFinal)
+	{
+		Nodo nMejor=null;
+		int mejorCoste=10000;
+		int costeNodo;
+		for(int i=0;i<lAbiertos.size();i++)
+		{
+			costeNodo=lAbiertos.get(i).CalcularCosteF(nFinal);
+		if(costeNodo<mejorCoste)
+		{
+			mejorCoste=costeNodo;
+			nMejor=lAbiertos.get(i);}	
+		}
+		return nMejor;
+	}
+	
+	protected ArrayList<Nodo> actualizarAbiertos(ArrayList<Nodo> lAbiertos,ArrayList<Nodo> lCerrados,ArrayList<Nodo> lvecinos, Nodo nFinal )
+	{
+		Nodo nVecino=null;
+		//ArrayList<Nodo> auxLAbiertos=lAbiertos;
+		boolean estaEnAbiertos=false;
+		boolean estaEnCerrados=false;
+		for(int i=0;i<lvecinos.size();i++)
+		{
+			estaEnAbiertos=false;
+			estaEnCerrados=false;
+			nVecino=lvecinos.get(i);
+			for(int k=0;k<lCerrados.size();k++)
+			{
+				if(nVecino.comparaEsNodo(lCerrados.get(k)))
+				{
+					estaEnCerrados=true;
+				}
+			}
+			
+			if(!estaEnCerrados)
+			{
+			for(int j=0;j<lAbiertos.size();j++)
+			{
+				if(nVecino.comparaEsNodo(lAbiertos.get(j)))
+				{
+					estaEnAbiertos=true;
+					if(nVecino.getCosteF()<lAbiertos.get(j).getCosteF())
+					{ 
+						lAbiertos.remove(j);
+						lAbiertos.add(nVecino);
+					}
+				}
+			}
+			
+			if(!estaEnAbiertos) lAbiertos.add(nVecino);
 			}
 		}
 		
-		return false;
+		return lAbiertos;
+		
 	}
+	
+	protected ArrayList<Nodo> calcularVecinos(ArrayList<Nodo> lvecinos,Nodo nActual) {
+		
+		int x=nActual.getPosX();
+		int z=nActual.getPosZ();
+		
+		if ( m_Map.CanWalk(x+1,z) ) {
+			lvecinos.add(new Nodo(x+1,z,nActual));
+			
+		}
+		if ( m_Map.CanWalk(x-1,z) ) {
+			lvecinos.add(new Nodo(x-1,z,nActual));
+			
+		}
+		if ( m_Map.CanWalk(x,z+1) ) {
+			lvecinos.add(new Nodo(x,z+1,nActual));
+			
+		}
+		if ( m_Map.CanWalk(x,z-1) ) {
+			lvecinos.add(new Nodo(x,z-1,nActual));
+			
+		}
+		
+		return lvecinos;
+            //consideramos que el coste es 1 siempre
+			  // El métdo getCost de m_Map es también para coger el coste, porque no es lo mismo si está por agua que por tierra
+			  // pero en este caso no importa, cogemos 1
+		//}
+		
+	}
+	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -586,6 +781,14 @@ protected void takeDown(){
 	 *   
 	 */
 	protected void PerformThresholdAction() {
+		
+		if (GetAmmo() < iAmmoThreshold) {
+			CallForAmmo();
+		}
+		if (this.GetHealth() < iHealthThreshold) {
+			CallForMedic();
+		}
+		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -603,30 +806,210 @@ protected void takeDown(){
 	 * @return <tt> TRUE</tt>: enemy found / <tt> FALSE</tt> enemy not found
 	 * 
 	 */
+	/* (non-Javadoc)
+	 * @see es.upv.dsic.gti_ia.jgomas.CBasicTroop#GetAgentToAim()
+	 */
 	protected boolean GetAgentToAim() {
-		
-		if ( m_FOVObjects.isEmpty() ) {
-			m_AimedAgent = null;
+		return GetAgentToAim_EnemigoMasCercano();
+
+	}
+	/**
+	 * Este metodo inserta en una lista los enemigos a la vista y 
+	 * asigna a m_AimedAgent aquel q está más cercano,en el caso que tenga amigos a la vista, calcula la diferencia entre
+	 * el ángulo del m_AimedAgent y el amigo si es <=1, no dispara
+	 * En el caso que hayan enemigos a la vista devuelve true y sino false.
+	 * @return
+	 */
+	protected boolean GetAgentToAim_EnemigoMasCercano()
+	{
+		m_AimedAgent = null;
+		boolean bfuegoAmigo=false;
+	     
+		//si no tengo ningún agente en el campo de visión devuelvo false
+	  	if ( m_FOVObjects.isEmpty() ) 
+	  	{
 			return false;
 		}
-		
-		Iterator it = m_FOVObjects.iterator();
-		while ( it.hasNext() ) {						
+
+		ArrayList<CSight> enemigos = new ArrayList<CSight>();
+		ArrayList<CSight> amigos=new ArrayList<CSight>();
+		@SuppressWarnings("unchecked")
+		Iterator<?> it = m_FOVObjects.iterator();
+		double distanciaMenor=Double.MAX_VALUE;
+		double distancia=0f;
+		CSight enemigoMascercano=null;
+		while ( it.hasNext() ) 
+		{						
 			CSight s = (CSight) it.next();
-			if ( s.getType() >= CPack.PACK_NONE ) {
+			if ( s.getType() >= CPack.PACK_NONE ) 
+			{
 				continue;
 			}
 	
 			int eTeam = s.getTeam();
 			
-			if ( m_eTeam == eTeam )
-				continue;
-			
-			m_AimedAgent = s;
-			return true; 
+			if ( m_eTeam != eTeam ) //si se trata de un enemigo, se añade a la lista de enemigos.
+			{
+				enemigos.add(s);
+			}
+			else // si es amigo
+			{
+				amigos.add(s);
+			}
+				
 		}
+		
+		if(!enemigos.isEmpty())
+		{			
+			for(int i=0;i<=enemigos.size()-1;i++)
+			{
+				distancia= this.distanciaManhattan(this.m_Movement.getPosition(),enemigos.get(i));
+			
+			if(distancia<distanciaMenor )
+			{
+				enemigoMascercano=enemigos.get(i);
+				distanciaMenor=distancia;
+			}
+			}
+
+		
+		if(!amigos.isEmpty())
+		{
+			for(int j=0;j<=amigos.size()-1;j++)
+			{
+				if(Math.abs(amigos.get(j).getAngle()-enemigoMascercano.getAngle())<=1)//si estan en el mismo ángulo de tiro o con un grado de diferencia
+					                                                                  
+				{
+					if(this.distanciaManhattan(this.m_Movement.getPosition(),amigos.get(j))<distanciaMenor)//y ademas está a una distancia menor que el agente enmigo
+                                                                                                          //No se dispara por peligro de fuego amigo
+					bfuegoAmigo=true;
+				}
+			}
+			if(!bfuegoAmigo)// si no hay ningún amigo en mismo o +1 ángulo y más cerca que el enemigo se dispara
+			{
+				m_AimedAgent=enemigoMascercano;
+			}
+			
+		}
+		else //si no tengo amigos en el campo de visión se dispara.
+		{
+			m_AimedAgent=enemigoMascercano;
+		}
+		}
+		if(m_AimedAgent != null)
+		{
+			return true;
+		}
+		else { return false;}
+		
+	}
+	/**
+	 * Este metodo inserta en una lista los enemigos a la vista y 
+	 * asigna a m_AimedAgent aquel q está tiene menos vida, en el caso que tenga amigos a la vista, calcula la diferencia entre
+	 * el ángulo del m_AimedAgent y el amigo si es <=1, no dispara
+	 * 
+	 * @return En el caso que hayan enemigos a la vista devuelve true y sino false.
+	 */
+	protected boolean GetAgentToAim_EnemigoMenosVida()
+	{
 		m_AimedAgent = null;
-		return false;
+	     
+		//si no tengo ningún agente en el campo de visión devuelvo false
+	  	if ( m_FOVObjects.isEmpty() ) 
+	  	{
+			return false;
+		}
+
+		ArrayList<CSight> enemigos = new ArrayList<CSight>();
+		ArrayList<CSight> amigos = new ArrayList<CSight>();
+		boolean bfuegoAmigo=false;
+		@SuppressWarnings("unchecked")
+		Iterator<?> it = m_FOVObjects.iterator();
+		int iMenorVida=Integer.MAX_VALUE;
+		int iVida=0;
+		CSight enemigoMenorVida=null;
+		double distanciaAmigo=0f;
+		double distanciaEnemigo=0f;
+		while ( it.hasNext() ) 
+		{						
+			CSight s = (CSight) it.next();
+			if ( s.getType() >= CPack.PACK_NONE ) 
+			{
+				continue;
+			}
+	
+			int eTeam = s.getTeam();
+			
+			if ( m_eTeam != eTeam ) //si se trata de un enemigo, se añade a la lista de enemigos.
+			{
+				enemigos.add(s);
+			}
+			else // si es amigo
+			{
+				amigos.add(s);
+			}
+		}
+		
+		if(!enemigos.isEmpty())
+		{			
+			for(int i=0;i<=enemigos.size()-1;i++)
+			{
+				iVida= enemigos.get(i).getHealth();
+			
+			if(iVida<iMenorVida )
+			{
+				enemigoMenorVida=enemigos.get(i);
+				iMenorVida=iVida;
+			}
+			}
+
+		
+		if(!amigos.isEmpty())
+		{
+			for(int j=0;j<=amigos.size()-1;j++)
+			{
+				if(Math.abs(amigos.get(j).getAngle()-enemigoMenorVida.getAngle())<=1)//si estan en el mismo ángulo de tiro o con un grado de diferencia
+					                                                                  //No se dispara por peligro de fuego amigo
+				{
+					distanciaAmigo=this.distanciaManhattan(this.m_Movement.getPosition(),amigos.get(j));
+					distanciaEnemigo=this.distanciaManhattan(this.m_Movement.getPosition(),enemigoMenorVida);
+					if(distanciaAmigo<=distanciaEnemigo)
+					{
+					bfuegoAmigo=true;
+					}
+				}
+			}
+			if(!bfuegoAmigo)// si no hay ningún amigo en mismo o +1 ángulo se dispara
+			{
+				m_AimedAgent=enemigoMenorVida;
+			}
+			
+		}
+		else //si no tengo amigos en el campo de visión se dispara.
+		{
+			m_AimedAgent=enemigoMenorVida;
+		}
+		}
+		if(m_AimedAgent != null)
+		{
+			return true;
+		}
+		else { return false;}
+		
+	}
+	/**
+	 * Este método calcula la distancia manhattan de la pos de este agente y de otro agente pasandolo como Csight
+	 * @param position
+	 * @param sight
+	 * @return
+	 */
+	protected double distanciaManhattan(Vector3D position, CSight sight) 
+	{
+		// la clase CSight tiene un método getDistance(), preguntar que distancia es esa?
+		double distancia=Math.abs(position.x-sight.getPosition().x)+Math.abs(position.y-sight.getPosition().y)+Math.abs(position.z-sight.getPosition().z);
+		
+		return distancia;
+		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -639,26 +1022,64 @@ protected void takeDown(){
 	 * <em> It's very useful to overload this method. </em>
 	 * 
 	 */
+	//@SuppressWarnings("serial")
 	protected void PerformLookAction() {
+		
 		//Busqueda de packs si los humbrales son bajos
-				if ( !m_FOVObjects.isEmpty() ) {
-					if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
-						Object[] list = m_FOVObjects.toArray();
-						for(int i = 0;i<list.length;i++){
-							CSight s = (CSight)list[i];
-							if ((s.getType() == CPack.PACK_MEDICPACK)&(GetHealth()<iHealthThreshold)) {
-								String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
-								AddTask(CTask.TASK_GOTO_POSITION , this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-								break;
-							}
-							else if ((s.getType() == CPack.PACK_AMMOPACK)&(GetAmmo()<iAmmoThreshold)){
-								String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
-								AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-								break;
-							}
-						}
+		if ( !m_FOVObjects.isEmpty() ) {
+			if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
+				Object[] list = m_FOVObjects.toArray();
+				for(int i = 0;i<list.length;i++){
+					CSight s = (CSight)list[i];
+					if ((s.getType() == CPack.PACK_MEDICPACK)&(GetHealth()<iHealthThreshold)) {
+						String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
+						AddTask(CTask.TASK_GOTO_POSITION , this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+						break;
 					}
-				}		
+					else if ((s.getType() == CPack.PACK_AMMOPACK)&(GetAmmo()<iAmmoThreshold)){
+						String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
+						AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+						break;
+					}
+				}
+			}
+		}		
+		
+		
+		// addBehaviour(new BehaviourSeguirAliado(this));
+		boolean bPartnerFound = false;
+		
+		if ( !m_FOVObjects.isEmpty() ) {
+		//@SuppressWarnings("unchecked") 
+		Iterator<?> it = m_FOVObjects.iterator();
+		while ( it.hasNext() && !bPartnerFound ) {
+		s = (CSight) it.next();
+		if ( s.getType() >= CPack.PACK_NONE ) {
+		continue;
+		}
+		bPartnerFound = m_eTeam == s.getTeam();
+		}
+		if (bPartnerFound) {
+		final double x = s.getPosition().x;
+		final double y = s.getPosition().y;
+		final double z = s.getPosition().z;
+		addBehaviour( new OneShotBehaviour(this) {
+		public void action () {
+		String msg = " ( " + x + " , " + y + " , " + z + " ) ";
+		AddTask( CTask.TASK_GOTO_POSITION, getAID(), msg, 2000);
+		System.out.println("New Destination: " + msg );
+		}
+		});
+		}
+		}
+		
+		
+		
+		
+			
+		 
+		 
+		
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -720,14 +1141,37 @@ protected void takeDown(){
 				System.out.println(getLocalName()+ ": Medic cannot leave Medic Packs");
 			break;
 		case CTask.TASK_GOTO_POSITION :
-			super.PerformTargetReached(_CurrentTask);
+			//super.PerformTargetReached(_CurrentTask);
+			/*
+			if(!bHeVuelto)
+			{
+			String posInit = " ( " + m_AStarPath[0].x + " , 0.0 , " + m_AStarPath[0].z + " ) ";
+			AddTask(CTask.TASK_WALKING_PATH, getAID(), posInit, 50000);
+			bHeVuelto=true;
+			}
+			*/
+			
 			double x=10+( Math.random()*m_Map.GetSizeX());
 		    double z=10+( Math.random() * m_Map.GetSizeZ());
 		    int y =0;
 		    
 		    String sNewPosition=" ( "+ (int) x+" , "+ y+" , "+ (int) z+" ) ";
 		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,1500);	
+		    
+			
+			
+			
+			
+			
 		    break;
+		case CTask.TASK_WALKING_PATH:
+			/*
+			super.PerformTargetReached(_CurrentTask);
+            m_iAStarPathIndex=0;
+            m_AStarPath=this.getvVolverPath();
+            */
+            
+			
 		default:
 			super.PerformTargetReached(_CurrentTask);
 			break;
