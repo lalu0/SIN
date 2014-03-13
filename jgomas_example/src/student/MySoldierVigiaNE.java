@@ -31,7 +31,7 @@ public class MySoldierVigiaNE extends CSoldier{
 	 * @see es.upv.dsic.gti_ia.jgomas.CSoldier#setup()
 	 */
 	protected void setup() {		
-		//AddServiceType("Mensajero");
+		AddServiceType("Mensajero");
 		AddServiceType("Vigia");
 		//Inicializo la lista de los agentes que se suscriben al servicio Vigia
 		 nvList=new Vector<AID>();
@@ -56,7 +56,7 @@ public class MySoldierVigiaNE extends CSoldier{
 				}
 			}
 		});
-		/*
+		
 		m_AidListaMensajeros = new Vector<AID>();
 		buscarMensajeros();
      
@@ -72,13 +72,13 @@ public class MySoldierVigiaNE extends CSoldier{
 				}
 			}
 		});	
-		*/	
+			
 	}
 	protected void addNV(AID nv){
 		System.out.println("añado un vigia "+nv.getLocalName());
 		nvList.add(nv);
 	}
-/*
+
 	void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		for (int i = 0;i<m_AidListaMensajeros.size();i++){
@@ -114,7 +114,18 @@ public class MySoldierVigiaNE extends CSoldier{
 	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
 
 	}
-	*/
+	
+	/* (non-Javadoc)
+	 * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
+	 * Este método se invoca antes de morir, si llevo la bandera aviso
+	 */
+	protected void takeDown(){
+		if(this.m_bObjectiveCarried){
+			//EnviarMensaje con la posicion
+			enviarMensaje("Bandera "+ m_Movement.getPosition());
+		}
+	}
+	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Methods to overload inherited from CTroop class
@@ -258,7 +269,10 @@ public class MySoldierVigiaNE extends CSoldier{
 	 * <em> It's very useful to overload this method. </em>
 	 *   
 	 */
-	protected void ObjectivePackTaken() {} // Should we do anything when we take the objective pack? 
+	protected void ObjectivePackTaken() {
+		//EnviarMensaje con la posicion
+		enviarMensaje("Cojo la bandera "+ m_Movement.getPosition());	
+	} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////

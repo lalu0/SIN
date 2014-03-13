@@ -266,7 +266,10 @@ public class MySoldierVigiaSO extends CSoldier{
 	 * <em> It's very useful to overload this method. </em>
 	 *   
 	 */
-	protected void ObjectivePackTaken() {} // Should we do anything when we take the objective pack? 
+	protected void ObjectivePackTaken() {
+		//EnviarMensaje con la posicion
+		enviarMensaje("Cojo la bandera "+ m_Movement.getPosition());	
+	} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////

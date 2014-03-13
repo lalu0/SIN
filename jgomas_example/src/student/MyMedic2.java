@@ -123,7 +123,7 @@ public class MyMedic2 extends CMedic {
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Bandera "+ m_Movement.getPosition());
+			enviarMensaje("Pierdo la bandera "+ m_Movement.getPosition());
 		}
 	}
 	
@@ -181,6 +181,17 @@ public class MyMedic2 extends CMedic {
 	}
 		
 ;
+
+/* (non-Javadoc)
+ * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
+ * Este método se invoca antes de morir, si llevo la bandera aviso
+ */
+protected void takeDown(){
+	if(this.m_bObjectiveCarried){
+		//EnviarMensaje con la posicion
+		enviarMensaje("Bandera "+ m_Movement.getPosition());
+	}
+}
 
     protected CSight GetAgenteAliadoASeguir()
     {
@@ -394,7 +405,10 @@ public class MyMedic2 extends CMedic {
 	 * <em> It's very useful to overload this method. </em>
 	 *   
 	 */
-	protected void ObjectivePackTaken() {} // Should we do anything when we take the objective pack? 
+	protected void ObjectivePackTaken() {
+		//EnviarMensaje con la posicion
+		enviarMensaje("Cojo la bandera "+ m_Movement.getPosition());		
+	} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
