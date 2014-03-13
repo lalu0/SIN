@@ -210,7 +210,7 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Bandera "+ m_Movement.getPosition());
+			enviarMensaje("Pierdo bandera "+ m_Movement.getPosition());
 		}
 	}
     
@@ -414,7 +414,7 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	 */
 	protected void ObjectivePackTaken() {
 		//EnviarMensaje con la posicion
-		enviarMensaje("Cojo la bandera "+ m_Movement.getPosition());	
+		enviarMensaje("Cojo bandera "+ m_Movement.getPosition());	
 	} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 

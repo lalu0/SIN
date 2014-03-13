@@ -60,7 +60,6 @@ public class SoldadoDefensa extends CSoldier{
 						}
 					}			
 				});
-<<<<<<< HEAD
 	}
 	
 	/* (non-Javadoc)
@@ -70,22 +69,8 @@ public class SoldadoDefensa extends CSoldier{
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Bandera "+ m_Movement.getPosition());
+			enviarMensaje("Pierdo bandera "+ m_Movement.getPosition());
 		}
-=======
->>>>>>> Aumento de la frecuencia de disparos, 2 disparos por cada 100
-	}
-	
-	/* (non-Javadoc)
-	 * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
-	 * Este método se invoca antes de morir, si llevo la bandera aviso
-	 */
-	protected void takeDown(){
-		if(this.m_bObjectiveCarried){
-			//EnviarMensaje con la posicion
-			enviarMensaje("Bandera "+ m_Movement.getPosition());
-		}
-	}
 
 	/**
      * Este método realiza el envío de mensajes en forma de String
@@ -275,7 +260,10 @@ public class SoldadoDefensa extends CSoldier{
 	 * <em> It's very useful to overload this method. </em>
 	 *   
 	 */
-	protected void ObjectivePackTaken() {} // Should we do anything when we take the objective pack? 
+	protected void ObjectivePackTaken() {
+		//EnviarMensaje con la posicion
+		enviarMensaje("Cojo la bandera "+ m_Movement.getPosition());	
+	} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
