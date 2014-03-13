@@ -644,15 +644,6 @@ public class MySoldierVigiaSO extends CSoldier{
 	 *   
 	 */
 	protected void PerformThresholdAction() {
-
-
-		if (GetAmmo() < iAmmoThreshold) {
-			CallForAmmo();
-		}
-		if (this.GetHealth() < iHealthThreshold) {
-			CallForMedic();
-		}
-
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 

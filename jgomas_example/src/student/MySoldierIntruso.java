@@ -1,7 +1,6 @@
 package student;
 import jade.core.AID;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -15,22 +14,18 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import es.upv.dsic.gti_ia.jgomas.*;
+import es.upv.dsic.gti_ia.jgomas.CTerrainMap;
 
 public class MySoldierIntruso extends CSoldier{
 	private static final long serialVersionUID = 1L;
 
+	private Vector<AID> m_AidListaMensajeros;
 	private Vector3D[] vVolverPath=new Vector3D [1000];
 	private boolean bHeVuelto=false;
 	private Vector3D posBandera=new Vector3D();
 	private boolean bBanderaCogida=false;
-	
-	private int iAmmoThreshold = 50;
-	private int iHealthThreshold = 50;
-	
-	private Vector<AID> m_AidListaMensajeros; //Lista de los aliados que desean recibir mis mensajes
-	
-	protected void setup() {
-		AddServiceType("Mensajero");//Me añado como mensajero para que me envien mensajes
+	protected void setup() {		
+		AddServiceType("Mensajero");
 
 		super.setup();
 		SetUpPriorities();
@@ -54,6 +49,7 @@ public class MySoldierIntruso extends CSoldier{
 					mensajeRecibido(msg);
 				}
 			}
+<<<<<<< HEAD
 		});	
 		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
 				SetUpPriorities();
@@ -87,12 +83,12 @@ public class MySoldierIntruso extends CSoldier{
 			//EnviarMensaje con la posicion
 			enviarMensaje("Bandera "+ m_Movement.getPosition());
 		}
+=======
+		});		
+>>>>>>> 3c812e9a28a8af463b3182e2622d679beb939fe2
 	}
 
-	/**
-     * Este método realiza el envío de mensajes en forma de String
-     */
-    void enviarMensaje(String mensaje){
+	void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		for (int i = 0;i<m_AidListaMensajeros.size();i++){
 			msg.addReceiver(m_AidListaMensajeros.elementAt(i));
@@ -103,11 +99,7 @@ public class MySoldierIntruso extends CSoldier{
 		send(msg);
 		System.out.println(getLocalName()+ ": Ha enviado un mensaje: "+mensaje);  		
 	}
-	/**
-	 * Este método implementa la búsqueda de mensajeros, para luego comunicarme con ellos (en principio todo el equipo)
-	 * Estos mensajes serán para protocolos como el aviso de que he muerto con la bandera o de que tengo la bandera
-	 *  y hay que cambiar la estrategia
-	 */
+
 	void buscarMensajeros(){
 		try {
 			DFAgentDescription dfd = new DFAgentDescription();
@@ -127,12 +119,9 @@ public class MySoldierIntruso extends CSoldier{
 			fe.printStackTrace();
 		}
 	}
-	
-	/**
-	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
-	 */
-	void mensajeRecibido(ACLMessage msg){
-		
+
+	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
+
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,17 +633,7 @@ public class MySoldierIntruso extends CSoldier{
 	 * <em> It's very useful to overload this method. </em>
 	 *   
 	 */
-	protected void PerformThresholdAction() {
-
-
-		if (GetAmmo() < iAmmoThreshold) {
-			CallForAmmo();
-		}
-		if (this.GetHealth() < iHealthThreshold) {
-			CallForMedic();
-		}
-
-	}
+	protected void PerformThresholdAction() {}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -886,24 +865,24 @@ public class MySoldierIntruso extends CSoldier{
 	 */
 	protected void PerformLookAction() {
 		//Busqueda de packs si los humbrales son bajos
-				if ( !m_FOVObjects.isEmpty() ) {
-					if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
-						Object[] list = m_FOVObjects.toArray();
-						for(int i = 0;i<list.length;i++){
-							CSight s = (CSight)list[i];
-							if ((s.getType() == CPack.PACK_MEDICPACK)&(GetHealth()<iHealthThreshold)) {
-								String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
-								AddTask(CTask.TASK_GOTO_POSITION , this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-								break;
-							}
-							else if ((s.getType() == CPack.PACK_AMMOPACK)&(GetAmmo()<iAmmoThreshold)){
-								String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
-								AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-								break;
-							}
-						}
+		if ( !m_FOVObjects.isEmpty() ) {
+			if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
+				Object[] list = m_FOVObjects.toArray();
+				for(int i = 0;i<list.length;i++){
+					CSight s = (CSight)list[i];
+					if ((s.getType() == CPack.PACK_MEDICPACK)&(GetHealth()<iHealthThreshold)) {
+						String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
+						AddTask(CTask.TASK_GOTO_POSITION , this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+						break;
 					}
-				}		
+					else if ((s.getType() == CPack.PACK_AMMOPACK)&(GetAmmo()<iAmmoThreshold)){
+						String sNewPosition = " ( " +s.getPosition().x + " , " + s.getPosition().y + " , " + s.getPosition().z + " ) ";
+						AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+						break;
+					}
+				}
+			}
+		}	
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
