@@ -31,7 +31,7 @@ public class MySoldierVigiaNE extends CSoldier{
 	 * @see es.upv.dsic.gti_ia.jgomas.CSoldier#setup()
 	 */
 	protected void setup() {		
-		//AddServiceType("Mensajero");
+		AddServiceType("Mensajero");
 		AddServiceType("Vigia");
 		//Inicializo la lista de los agentes que se suscriben al servicio Vigia
 		 nvList=new Vector<AID>();
@@ -56,7 +56,7 @@ public class MySoldierVigiaNE extends CSoldier{
 				}
 			}
 		});
-		/*
+		
 		m_AidListaMensajeros = new Vector<AID>();
 		buscarMensajeros();
      
@@ -72,7 +72,6 @@ public class MySoldierVigiaNE extends CSoldier{
 				}
 			}
 		});	
-<<<<<<< HEAD
 		
 		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
 				SetUpPriorities();
@@ -83,7 +82,6 @@ public class MySoldierVigiaNE extends CSoldier{
 						}
 					}			
 				});
-<<<<<<< HEAD
 	}
 	/* (non-Javadoc)
 	 * @see es.upv.dsic.gti_ia.jgomas.CTroop#takeDown()
@@ -94,17 +92,12 @@ public class MySoldierVigiaNE extends CSoldier{
 			//EnviarMensaje con la posicion
 			enviarMensaje("Pierdo bandera "+ m_Movement.getPosition());
 		}
-=======
->>>>>>> Aumento de la frecuencia de disparos, 2 disparos por cada 100
-=======
-		*/	
->>>>>>> 3c812e9a28a8af463b3182e2622d679beb939fe2
 	}
 	protected void addNV(AID nv){
 		System.out.println("añado un vigia "+nv.getLocalName());
 		nvList.add(nv);
 	}
-/*
+
 	void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		for (int i = 0;i<m_AidListaMensajeros.size();i++){
@@ -140,7 +133,7 @@ public class MySoldierVigiaNE extends CSoldier{
 	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
 
 	}
-	*/
+	
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Methods to overload inherited from CTroop class
