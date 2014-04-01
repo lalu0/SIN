@@ -415,7 +415,7 @@ public class MySoldierVigiaSO extends CSoldier{
 		 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
 		 {
 			 if(nCurrent.getPadre()==null) esInicial=true;
-			 lv3D.add(new Vector3D(nCurrent.getPosX()*8,0,nCurrent.getPosZ()*8));
+			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)-4),0,nCurrent.getPosZ()*8+((int)(Math.random()*8)-4)));
 			 nCurrent=nCurrent.getPadre();		 
 		 }
 		 Vector3D[] v3D=new Vector3D[lv3D.size()];

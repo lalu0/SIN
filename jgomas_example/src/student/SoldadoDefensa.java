@@ -245,7 +245,7 @@ public class SoldadoDefensa extends CSoldier{
 				msg.setContent("Dame posicion");
 				send(msg);
 				System.out.println(getLocalName()+ ": Need a Medic! (v21)");  	
-				
+
 				//Un segundo despues los ordena y solicita ayuda
 				addBehaviour(new TickerBehaviour(this,1000){
 					public void onTick(){
@@ -271,14 +271,13 @@ public class SoldadoDefensa extends CSoldier{
 								//Ordena la lista de médicos en función de su distancia
 								if(posiciones.size()>0)
 									msg.addReceiver((AID)posiciones.elementA(0));								
-									msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-									msg.setConversationId("CFM");
-									msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
-									send(msg);
-									posiciones.removeElementAt(0);
-									posiciones.removeElementAt(1);
-								}
-							}
+								msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+								msg.setConversationId("CFM");
+								msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
+								send(msg);
+								posiciones.removeElementAt(0);
+								posiciones.removeElementAt(1);
+							}						
 							boolean done(){
 								if(posiciones.size()==0)
 									return true;
@@ -297,17 +296,17 @@ public class SoldadoDefensa extends CSoldier{
 			fe.printStackTrace();
 		}
 	}
-	/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	/////////////////////////////////////////////////////////////////////////////////////////////////////
-	/**
-	 * Request for ammunition. 
-	 * 
-	 * This method sends a <b> FIPA REQUEST </b> message to all agents who offers the <tt> m_sAmmoService </tt> service.
-	 * 
-	 * The content of message is: <tt> ( x , y , z ) ( ammo ) </tt>.
-	 * 
-	 * Variable <tt> m_iFieldOpsCount </tt> is updated.
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * Request for ammunition. 
+ * 
+ * This method sends a <b> FIPA REQUEST </b> message to all agents who offers the <tt> m_sAmmoService </tt> service.
+ * 
+ * The content of message is: <tt> ( x , y , z ) ( ammo ) </tt>.
+ * 
+ * Variable <tt> m_iFieldOpsCount </tt> is updated.
 	 * 
 	 * <em> It's very useful to overload this method. </em>
 	 *    
@@ -539,7 +538,7 @@ public class SoldadoDefensa extends CSoldier{
 			 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
 			 {
 				 if(nCurrent.getPadre()==null) esInicial=true;
-				 lv3D.add(new Vector3D(nCurrent.getPosX()*8,0,nCurrent.getPosZ()*8));
+				 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)-4),0,nCurrent.getPosZ()*8+((int)(Math.random()*8)-4)));
 				 nCurrent=nCurrent.getPadre();		 
 			 }
 			 Vector3D[] v3D=new Vector3D[lv3D.size()];
