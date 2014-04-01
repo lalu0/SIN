@@ -47,6 +47,7 @@ public class MyMedicEscudo extends CMedic {
 	private int iterShouldUpdateTarget=0;
 	private boolean bTengoBandera=false;
 	private boolean bNecesitoMedicina=false;
+	private boolean bModoBandera=false;
 	
 	private int iAmmoThreshold = 50;
 	private int iHealthThreshold = 50;
@@ -57,7 +58,7 @@ public class MyMedicEscudo extends CMedic {
 	 */
 	protected void setup() {
 		AddServiceType("Mensajero");//Me añado como mensajero para que me envien mensajes
-		
+		AddServiceType("Escudo");//Me añado como escudo, los mensajes de escudo los trataré en mensajeRecibido
 		
 		super.setup();
 		SetUpPriorities();
@@ -246,7 +247,28 @@ protected void takeDown(){
 	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
 	 */
 	void mensajeRecibido(ACLMessage msg){
-		
+		Scanner contenido = new Scanner(msg.getContent());
+		String siguiente = contenido.next(); 
+		if(siguiente = "Dame"){
+			String siguiente = contenido.next(); 
+			if(siguiente = "posicion"){
+				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+				msg.addReceiver(msg.getSender());
+				msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+				msg.setConversationId("MS");
+				msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
+				send(msg);				
+			}
+		}
+		else if(siguiente = "Posicion"){
+			posiciones.add(msg.getSender());
+			posiciones.add(new Vector3D(contenido.next(),contenido.next(),contenido.next()));
+		}
+		else if(siguiente = "CojoBandera"){
+			bModoBandera = true;
+			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		}
 	}
 
     /*
@@ -402,7 +424,36 @@ protected void takeDown(){
 	 */
 	protected void ObjectivePackTaken() {
 		//EnviarMensaje con la posicion
-		enviarMensaje("Cojo bandera "+ m_Movement.getPosition());	
+		enviarMensaje("CojoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);	
+		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
+			public void action(){
+				try {
+					DFAgentDescription dfd = new DFAgentDescription();
+					ServiceDescription sd = new ServiceDescription();
+					sd.setType("Escudo_Allied");
+					dfd.addServices(sd);
+					DFAgentDescription[] result = DFService.search(this, dfd);
+					if ( result.length > 0 ) {						
+						// Fill the REQUEST message
+						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+						for ( int i = 0; i < result.length; i++ ) {
+
+							DFAgentDescription dfdVigia = result[i];
+							AID Vigia = dfdVigia.getName();
+							if ( ! Vigia.equals(getName()) )
+								msg.addReceiver(dfdVigia.getName());					
+						}
+						msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+						msg.setConversationId("MS");
+						msg.setContent("CojoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
+						send(msg);
+					} 
+				} catch (FIPAException fe) {
+					fe.printStackTrace();
+				}
+
+			}
+		});	
 	} // Should we do anything when we take the objective pack? 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
 

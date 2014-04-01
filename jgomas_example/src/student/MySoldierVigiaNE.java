@@ -279,7 +279,36 @@ public class MySoldierVigiaNE extends CSoldier{
 	 */
 	protected void ObjectivePackTaken() {
 		//EnviarMensaje con la posicion
-		enviarMensaje("Cojo bandera "+ m_Movement.getPosition());	
+		enviarMensaje("CojoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);	
+		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
+			public void action(){
+				try {
+					DFAgentDescription dfd = new DFAgentDescription();
+					ServiceDescription sd = new ServiceDescription();
+					sd.setType("Escudo_Allied");
+					dfd.addServices(sd);
+					DFAgentDescription[] result = DFService.search(this, dfd);
+					if ( result.length > 0 ) {						
+						// Fill the REQUEST message
+						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
+						for ( int i = 0; i < result.length; i++ ) {
+
+							DFAgentDescription dfdVigia = result[i];
+							AID Vigia = dfdVigia.getName();
+							if ( ! Vigia.equals(getName()) )
+								msg.addReceiver(dfdVigia.getName());					
+						}
+						msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+						msg.setConversationId("MS");
+						msg.setContent("CojoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
+						send(msg);
+					} 
+				} catch (FIPAException fe) {
+					fe.printStackTrace();
+				}
+
+			}
+		});	
 	} // Should we do anything when we take the objective pack? 
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
