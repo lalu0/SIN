@@ -175,7 +175,7 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 protected void takeDown(){
 	if(this.m_bObjectiveCarried){
 		//EnviarMensaje con la posicion
-		enviarMensaje("Pierdo bandera "+ m_Movement.getPosition());
+		enviarMensaje("PierdoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
 	}
 }
 
@@ -266,6 +266,11 @@ protected void takeDown(){
 		}
 		else if(siguiente = "CojoBandera"){
 			bModoBandera = true;
+			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		}
+		else if(siguiente = "PierdoBandera"){
+			bModoBandera = false;
 			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
 			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
 		}

@@ -74,7 +74,7 @@ public class MySoldierVigiaSO extends CSoldier{
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Pierdo bandera "+ m_Movement.getPosition());
+			enviarMensaje("PierdoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
 		}
 
 	/**

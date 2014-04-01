@@ -68,7 +68,7 @@ public class MySoldierIntruso extends CSoldier{
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Pierdo bandera "+ m_Movement.getPosition());
+			enviarMensaje("PierdoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
 		}
 
 	void enviarMensaje(String mensaje){
@@ -104,7 +104,10 @@ public class MySoldierIntruso extends CSoldier{
 	}
 
 	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
-
+		if(siguiente = "PierdoBandera"){
+			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////

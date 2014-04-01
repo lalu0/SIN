@@ -122,9 +122,9 @@ public class MyMedic2 extends CMedic {
 	protected void takeDown(){
 		if(this.m_bObjectiveCarried){
 			//EnviarMensaje con la posicion
-			enviarMensaje("Pierdo Bandera "+ m_Movement.getPosition());
+			enviarMensaje("PierdoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
 		}
-	
+	}
 	/**
 	 * @author lauenbo
 	 * Primero creamos el comportamiento, pero el agente solo ejecutará esto hasta llegar al objetivo que le hemos marcado
@@ -247,7 +247,10 @@ public class MyMedic2 extends CMedic {
 	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
 	 */
 	void mensajeRecibido(ACLMessage msg){
-		
+		if(siguiente = "PierdoBandera"){
+			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		}
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////
