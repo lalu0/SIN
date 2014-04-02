@@ -48,6 +48,7 @@ public class MyMedic extends CMedic {
 	private int iterShouldUpdateTarget=0;
 	private boolean bTengoBandera=false;
 	private boolean bNecesitoMedicina=false;
+	private boolean bOcupado=false;
 	
 	private int iAmmoThreshold = 50;
 	private int iHealthThreshold = 50;
@@ -257,7 +258,22 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
 	 */
 	void mensajeRecibido(ACLMessage msg){
-		if(siguiente = "PierdoBandera"){
+		Scanner contenido = new Scanner(msg.getContent());
+		String siguiente = contenido.next(); 
+		if(siguiente = "Dame"){
+			String siguiente = contenido.next(); 
+			if(siguiente = "posicion"){
+				if (!bOcupado){
+					ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+					msg.addReceiver(msg.getSender());
+					msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+					msg.setConversationId("MS");
+					msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
+					send(msg);		
+				}
+			}
+		}
+		else if(siguiente = "PierdoBandera"){
 			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
 			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
 		}
@@ -1126,7 +1142,7 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 	 * 
 	 */
 	protected boolean checkMedicAction(String _sContent) {
-		// We always go to help
+		bOcupado = true;
 		return ( true );
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////

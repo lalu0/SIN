@@ -48,6 +48,7 @@ public class MyMedicEscudo extends CMedic {
 	private boolean bTengoBandera=false;
 	private boolean bNecesitoMedicina=false;
 	private boolean bModoBandera=false;
+	private boolean bOcupado=false;
 	
 	private int iAmmoThreshold = 50;
 	private int iHealthThreshold = 50;
@@ -252,12 +253,14 @@ protected void takeDown(){
 		if(siguiente = "Dame"){
 			String siguiente = contenido.next(); 
 			if(siguiente = "posicion"){
-				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-				msg.addReceiver(msg.getSender());
-				msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-				msg.setConversationId("MS");
-				msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
-				send(msg);				
+				if (!bOcupado){
+					ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+					msg.addReceiver(msg.getSender());
+					msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+					msg.setConversationId("MS");
+					msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
+					send(msg);		
+				}
 			}
 		}
 		else if(siguiente = "Posicion"){
@@ -1139,7 +1142,7 @@ protected void takeDown(){
 	 * 
 	 */
 	protected boolean checkMedicAction(String _sContent) {
-		// We always go to help
+		bOcupado = true;
 		return ( true );
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////

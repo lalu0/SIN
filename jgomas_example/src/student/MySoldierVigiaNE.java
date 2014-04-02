@@ -155,17 +155,14 @@ public class MySoldierVigiaNE extends CSoldier{
 	 */
 
 	protected void CallForMedic() {
-
-		try {
-
+		try {//Solicita la lista de médicos
 			DFAgentDescription dfd = new DFAgentDescription();
 			ServiceDescription sd = new ServiceDescription();
 			sd.setType(m_sMedicService);
 			dfd.addServices(sd);
 			DFAgentDescription[] result = DFService.search(this, dfd);
 
-			if ( result.length > 0 ) {
-
+			if ( result.length > 0 ) {//Pide a todos los médicos su posición
 				m_iMedicsCount = result.length;
 
 				// Fill the REQUEST message
@@ -181,10 +178,49 @@ public class MySoldierVigiaNE extends CSoldier{
 						m_iMedicsCount--;
 				}
 				msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-				msg.setConversationId("CFM");
-				msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
+				msg.setConversationId("MS");
+				msg.setContent("Dame posicion");
 				send(msg);
-				System.out.println(getLocalName()+ ": Need a Medic! (v21)");  			
+				System.out.println(getLocalName()+ ": Need a Medic! (v21)");  	
+
+				//Un segundo despues los ordena y solicita ayuda al primero
+				addBehaviour(new TickerBehaviour(this,1000){
+					public void onTick(){
+						//Ordena la lista de médicos en función de su distancia
+						AID aux0;
+						Vector3D aux1;
+						posiciones = new Vector<Object>();
+						for (int i=1;i<posiciones.size();i=i+2){			
+							for (int j=1;j<posiciones.size();j=j+2){
+								if(AStarDistance(posiciones.elementAt(j))>AStarDistance(posiciones.elementAt(j+2))){
+									aux1 = result(j+2);
+									aux0 = result(j);
+									posiciones.elementAt(j+2) = posiciones.elementAt(j);
+									posiciones.elementAt(j+1) = posiciones.elementAt(j-1);
+									posiciones.elementAt(j) = aux1;
+									posiciones.elementAt(j-1) = aux0;
+								} 
+							}
+						}
+					}
+					boolean done(){
+						addBehaviour(new TickerBehaviour(this,100){
+							public void onTick(){
+								//Ordena la lista de médicos en función de su distancia
+								if(posiciones.size()>0)
+									msg.addReceiver((AID)posiciones.elementA(0));								
+								msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+								msg.setConversationId("CFM");
+								msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
+								send(msg);
+							}						
+							boolean done(){
+								true;
+							}
+						});
+						return true;
+					}
+				});
 
 			} else {
 				m_iMedicsCount = 0;
