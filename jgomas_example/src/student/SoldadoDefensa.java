@@ -1,5 +1,9 @@
 package student;
 import jade.core.AID;
+
+import java.util.Vector;
+import java.util.Scanner;
+
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
@@ -20,6 +24,7 @@ import es.upv.dsic.gti_ia.jgomas.*;
 
 public class SoldadoDefensa extends CSoldier{
 	private static final long serialVersionUID = 1L;
+	private CBasicTroop Me = this;
 
 	
 	private Vector3D[] vVolverPath=new Vector3D [1000];
@@ -180,22 +185,18 @@ public class SoldadoDefensa extends CSoldier{
 	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
 	 */
 	void mensajeRecibido(ACLMessage msg){
-		Scanner contenido = new Scanner(msg.getContent());
-		String siguiente = contenido.next(); 
-		if(siguiente = "Dame"){
-			String siguiente = contenido.next(); 
-			if(siguiente = "posicion"){
-				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-				msg.addReceiver(msg.getSender());
-				msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-				msg.setConversationId("MS");
-				msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
-				send(msg);				
+		try{
+			Scanner contenido = new Scanner(msg.getContent());
+			if (contenido.hasNext()){
+				String siguiente = contenido.next(); 
+				if((siguiente != null) && (siguiente =="PierdoBandera")){
+					String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+					AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+				}
 			}
 		}
-		else if(siguiente = "Posicion"){
-			posiciones.add(msg.getSender());
-			posiciones.add(new Vector3D(contenido.next(),contenido.next(),contenido.next()));
+		catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 
@@ -230,7 +231,7 @@ public class SoldadoDefensa extends CSoldier{
 				m_iMedicsCount = result.length;
 
 				// Fill the REQUEST message
-				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+				final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
 
 				for ( int i = 0; i < result.length; i++ ) {
 
@@ -256,35 +257,32 @@ public class SoldadoDefensa extends CSoldier{
 						posiciones = new Vector<Object>();
 						for (int i=1;i<posiciones.size();i=i+2){			
 							for (int j=1;j<posiciones.size();j=j+2){
-								if(AStarDistance(posiciones.elementAt(j))>AStarDistance(posiciones.elementAt(j+2))){
-									aux1 = result(j+2);
-									aux0 = result(j);
-									posiciones.elementAt(j+2) = posiciones.elementAt(j);
-									posiciones.elementAt(j+1) = posiciones.elementAt(j-1);
-									posiciones.elementAt(j) = aux1;
-									posiciones.elementAt(j-1) = aux0;
+								if(AStarDistance((Vector3D)posiciones.elementAt(j))>AStarDistance((Vector3D)posiciones.elementAt(j+2))){
+									aux1 = (Vector3D)posiciones.elementAt(j+2);
+									aux0 = (AID)posiciones.elementAt(j);
+									posiciones.set(j+2,posiciones.elementAt(j));
+									posiciones.set(j+1,posiciones.elementAt(j-1));
+									posiciones.set(j,aux1);
+									posiciones.set(j-1,aux0);
 								} 
 							}
 						}
-					}
-					boolean done(){
-						addBehaviour(new TickerBehaviour(this,100){
+						addBehaviour(new TickerBehaviour(Me,100){
 							public void onTick(){
 								//Ordena la lista de médicos en función de su distancia
-								if(posiciones.size()>0)
-									msg.addReceiver((AID)posiciones.elementA(0));								
-								msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-								msg.setConversationId("CFM");
-								msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
-								send(msg);
-							}						
-							boolean done(){
-								true;
-							}
+								if(posiciones.size()>0){
+									final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+									msg.addReceiver((AID)posiciones.elementAt(0));								
+									msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+									msg.setConversationId("CFM");
+									msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
+									send(msg);
+									stop();
+								}
+							}	
 						});
-						return true;
-					}
-				});
+						stop();					
+					}});
 
 			} else {
 				m_iMedicsCount = 0;
@@ -293,7 +291,7 @@ public class SoldadoDefensa extends CSoldier{
 			fe.printStackTrace();
 		}
 	}
-/////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -387,7 +385,7 @@ public class SoldadoDefensa extends CSoldier{
 					ServiceDescription sd = new ServiceDescription();
 					sd.setType("Escudo_Allied");
 					dfd.addServices(sd);
-					DFAgentDescription[] result = DFService.search(this, dfd);
+					DFAgentDescription[] result = DFService.search(Me, dfd);
 					if ( result.length > 0 ) {						
 						// Fill the REQUEST message
 						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -564,7 +562,7 @@ public class SoldadoDefensa extends CSoldier{
 			 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
 			 {
 				 if(nCurrent.getPadre()==null) esInicial=true;
-				 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)-4),0,nCurrent.getPosZ()*8+((int)(Math.random()*8)-4)));
+				 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)),0,nCurrent.getPosZ()*8+((int)(Math.random()*8))));
 				 nCurrent=nCurrent.getPadre();		 
 			 }
 			 Vector3D[] v3D=new Vector3D[lv3D.size()];

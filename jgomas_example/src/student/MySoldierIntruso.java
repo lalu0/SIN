@@ -1,6 +1,11 @@
 package student;
 import jade.core.AID;
+
+import java.util.Vector;
+import java.util.Scanner;
+
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
@@ -14,16 +19,18 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import es.upv.dsic.gti_ia.jgomas.*;
-import es.upv.dsic.gti_ia.jgomas.CTerrainMap;
 
 public class MySoldierIntruso extends CSoldier{
 	private static final long serialVersionUID = 1L;
+	private CBasicTroop Me = this;
 
 	private Vector<AID> m_AidListaMensajeros;
 	private Vector3D[] vVolverPath=new Vector3D [1000];
 	private boolean bHeVuelto=false;
 	private Vector3D posBandera=new Vector3D();
 	private boolean bBanderaCogida=false;
+	private int iAmmoThreshold = 30;
+	private int iHealthThreshold = 30;
 	protected void setup() {		
 		AddServiceType("Mensajero");
 
@@ -49,7 +56,6 @@ public class MySoldierIntruso extends CSoldier{
 					mensajeRecibido(msg);
 				}
 			}
-<<<<<<< HEAD
 		});	
 		//Aumentos del disparo, cada 10 milisegundos dispara 2 veces si puede
 				SetUpPriorities();
@@ -70,6 +76,7 @@ public class MySoldierIntruso extends CSoldier{
 			//EnviarMensaje con la posicion
 			enviarMensaje("PierdoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
 		}
+	}
 
 	void enviarMensaje(String mensaje){
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -104,9 +111,18 @@ public class MySoldierIntruso extends CSoldier{
 	}
 
 	void mensajeRecibido(ACLMessage msg){//Tratamiento del mensaje
-		if(siguiente = "PierdoBandera"){
-			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
-			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		try{
+			Scanner contenido = new Scanner(msg.getContent());
+			if (contenido.hasNext()){
+				String siguiente = contenido.next(); 
+				if((siguiente != null) && (siguiente =="PierdoBandera")){
+					String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+					AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+				}
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 
@@ -262,7 +278,7 @@ public class MySoldierIntruso extends CSoldier{
 					ServiceDescription sd = new ServiceDescription();
 					sd.setType("Escudo_Allied");
 					dfd.addServices(sd);
-					DFAgentDescription[] result = DFService.search(this, dfd);
+					DFAgentDescription[] result = DFService.search(Me, dfd);
 					if ( result.length > 0 ) {						
 						// Fill the REQUEST message
 						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -432,7 +448,7 @@ public class MySoldierIntruso extends CSoldier{
 		 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
 		 {
 			 if(nCurrent.getPadre()==null) esInicial=true;
-			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)-4),0,nCurrent.getPosZ()*8+((int)(Math.random()*8)-4)));
+			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)),0,nCurrent.getPosZ()*8+((int)(Math.random()*8))));
 			 nCurrent=nCurrent.getPadre();		 
 		 }
 		 Vector3D[] v3D=new Vector3D[lv3D.size()];
@@ -885,7 +901,7 @@ public class MySoldierIntruso extends CSoldier{
 	protected void PerformLookAction() {
 		//Busqueda de packs si los humbrales son bajos
 		if ( !m_FOVObjects.isEmpty() ) {
-			if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold)){
+			if((GetAmmo()<iAmmoThreshold)||(GetHealth()<iHealthThreshold )){
 				Object[] list = m_FOVObjects.toArray();
 				for(int i = 0;i<list.length;i++){
 					CSight s = (CSight)list[i];

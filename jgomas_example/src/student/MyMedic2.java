@@ -13,25 +13,21 @@ import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 import java.util.Iterator;
+import java.util.Vector;
+import java.util.Scanner;
 
 import javax.swing.text.Position;
 
+import es.upv.dsic.gti_ia.jgomas.CBasicTroop;
 import es.upv.dsic.gti_ia.jgomas.CMedic;
 import es.upv.dsic.gti_ia.jgomas.CPack;
 import es.upv.dsic.gti_ia.jgomas.CSight;
 import es.upv.dsic.gti_ia.jgomas.CTask;
 import es.upv.dsic.gti_ia.jgomas.Vector3D;
 
-/**
- * @author Lau
- *
- */
-/**
- * @author Lau
- *
- */
 
 public class MyMedic2 extends CMedic {
 	
@@ -42,6 +38,7 @@ public class MyMedic2 extends CMedic {
 	
 	private static final long serialVersionUID = 1L;
     private CSight aliadoAseguir=null;
+    private CBasicTroop Me = this;
     
     private int iAmmoThreshold = 50;
 	private int iHealthThreshold = 50;
@@ -248,24 +245,31 @@ public class MyMedic2 extends CMedic {
 	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
 	 */
 	void mensajeRecibido(ACLMessage msg){
-		Scanner contenido = new Scanner(msg.getContent());
-		String siguiente = contenido.next(); 
-		if(siguiente = "Dame"){
-			String siguiente = contenido.next(); 
-			if(siguiente = "posicion"){
-				if (!bOcupado){
-					ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-					msg.addReceiver(msg.getSender());
-					msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-					msg.setConversationId("MS");
-					msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
-					send(msg);		
+		try{
+			Scanner contenido = new Scanner(msg.getContent());
+			if (contenido.hasNext()){
+				String siguiente = contenido.next(); 
+				if((siguiente != null) && (siguiente =="Dame")){
+					siguiente = contenido.next(); 
+					if((siguiente != null) && (siguiente =="posicion")){
+						if (!bOcupado){
+							ACLMessage msg2 = new ACLMessage(ACLMessage.REQUEST);
+							msg2.addReceiver(msg.getSender());
+							msg2.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+							msg2.setConversationId("MS");
+							msg2.setContent("Posicion "+this.m_Movement.getPosition().x+" "+this.m_Movement.getPosition().y+" "+this.m_Movement.getPosition().z);
+							send(msg2);		
+						}
+					}
+				}
+				else if((siguiente != null) && (siguiente =="PierdoBandera")){
+					String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
+					AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
 				}
 			}
 		}
-		else if(siguiente = "PierdoBandera"){
-			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
-			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 	
@@ -422,7 +426,7 @@ public class MyMedic2 extends CMedic {
 					ServiceDescription sd = new ServiceDescription();
 					sd.setType("Escudo_Allied");
 					dfd.addServices(sd);
-					DFAgentDescription[] result = DFService.search(this, dfd);
+					DFAgentDescription[] result = DFService.search(Me, dfd);
 					if ( result.length > 0 ) {						
 						// Fill the REQUEST message
 						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);

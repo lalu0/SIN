@@ -1,5 +1,9 @@
 package student;
 import jade.core.AID;
+
+import java.util.Vector;
+import java.util.Scanner;
+
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
@@ -23,6 +27,7 @@ public class MySoldierVigiaSO extends CSoldier{
 	private boolean bHeVuelto=false;
 	private Vector3D posBandera=new Vector3D();
 	private boolean bBanderaCogida=false;
+	private CBasicTroop Me = this;
 	
 	private int iAmmoThreshold = 50;
 	private int iHealthThreshold = 50;
@@ -76,6 +81,62 @@ public class MySoldierVigiaSO extends CSoldier{
 			//EnviarMensaje con la posicion
 			enviarMensaje("PierdoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
 		}
+	}
+	
+	protected int AStarDistance(Vector3D end){
+		//Inicialización del algoritmo		
+		bHeVuelto=false;
+		m_iAStarPathIndex=0;//inicilaizamos a 0		
+		
+		Vector3D vNewDestination=new Vector3D(m_Movement.getPosition().x,0.0,m_Movement.getPosition().z);
+		
+		ArrayList<Vector3D> lv3D=new ArrayList<Vector3D>();//para ir metiendo los puntos que luego le pasaré en orden descendente a m_AStarPath
+		ArrayList<Nodo> lAbiertos=new ArrayList<Nodo>();
+		ArrayList<Nodo> lCerrados=new ArrayList<Nodo>();
+		ArrayList<Nodo> lvecinos=new ArrayList<Nodo>();
+		
+		int xInit =(int) Math.floor(m_Movement.getPosition().x);
+		xInit /= 8;
+		int zInit = (int) Math.floor(m_Movement.getPosition().z);
+		zInit /= 8;
+		int xFinal =(int) Math.floor(end.x);
+		xFinal /= 8;
+		int zFinal = (int) Math.floor(end.z);
+		zFinal /= 8;
+		
+		Nodo nodoInit= new Nodo(xInit,zInit,null);
+		Nodo nodoFinal=new Nodo(xFinal,zFinal,null);
+		Nodo nodoActual=null;
+		 lAbiertos.add(nodoInit);// añado el nodo inicial a la lista de abiertos
+		 boolean esNodoFinal=false;
+		 while(!esNodoFinal)    //(!lAbiertos.isEmpty()){
+		 {
+			nodoActual=this.obtenerNodoMejorCoste(lAbiertos,nodoFinal); //obtener el nodo abierto de menor coste
+			for(int i=0;i<lAbiertos.size();i++)
+			{
+				if(nodoActual.comparaEsNodo(lAbiertos.get(i)) )
+				{
+					lAbiertos.remove(i);
+				}
+			}
+			//System.out.println("2 Labiertos tiene"+lAbiertos.size());
+			//lAbiertos.remove(nodoActual);
+			lCerrados.add(nodoActual);
+			if(nodoActual.comparaEsNodo(nodoFinal))
+			{
+				esNodoFinal=true;
+				break;
+				
+			}
+			lvecinos.clear();
+		   lvecinos= this.calcularVecinos(lvecinos,nodoActual);
+		   
+		   lAbiertos= this.actualizarAbiertos(lAbiertos,lCerrados,lvecinos,nodoFinal);	
+		    //System.out.println("Ha entrado en el bucle");
+		    //System.out.println("Nodo Actual x:"+nodoActual.getPosX()+" y posicion z: "+nodoActual.getPosZ());
+		 }
+		 return lCerrados.size()*8;
+	}
 
 	/**
      * Este método realiza el envío de mensajes en forma de String
@@ -143,7 +204,6 @@ public class MySoldierVigiaSO extends CSoldier{
 	 */
 
 	protected void CallForMedic() {
-
 		try {//Solicita la lista de médicos
 			DFAgentDescription dfd = new DFAgentDescription();
 			ServiceDescription sd = new ServiceDescription();
@@ -155,7 +215,7 @@ public class MySoldierVigiaSO extends CSoldier{
 				m_iMedicsCount = result.length;
 
 				// Fill the REQUEST message
-				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+				final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
 
 				for ( int i = 0; i < result.length; i++ ) {
 
@@ -174,6 +234,8 @@ public class MySoldierVigiaSO extends CSoldier{
 
 				//Un segundo despues los ordena y solicita ayuda al primero
 				addBehaviour(new TickerBehaviour(this,1000){
+					private Vector<Object> posiciones;
+
 					public void onTick(){
 						//Ordena la lista de médicos en función de su distancia
 						AID aux0;
@@ -181,35 +243,32 @@ public class MySoldierVigiaSO extends CSoldier{
 						posiciones = new Vector<Object>();
 						for (int i=1;i<posiciones.size();i=i+2){			
 							for (int j=1;j<posiciones.size();j=j+2){
-								if(AStarDistance(posiciones.elementAt(j))>AStarDistance(posiciones.elementAt(j+2))){
-									aux1 = result(j+2);
-									aux0 = result(j);
-									posiciones.elementAt(j+2) = posiciones.elementAt(j);
-									posiciones.elementAt(j+1) = posiciones.elementAt(j-1);
-									posiciones.elementAt(j) = aux1;
-									posiciones.elementAt(j-1) = aux0;
+								if(AStarDistance((Vector3D)posiciones.elementAt(j))>AStarDistance((Vector3D)posiciones.elementAt(j+2))){
+									aux1 = (Vector3D)posiciones.elementAt(j+2);
+									aux0 = (AID)posiciones.elementAt(j);
+									posiciones.set(j+2,posiciones.elementAt(j));
+									posiciones.set(j+1,posiciones.elementAt(j-1));
+									posiciones.set(j,aux1);
+									posiciones.set(j-1,aux0);
 								} 
 							}
 						}
-					}
-					boolean done(){
-						addBehaviour(new TickerBehaviour(this,100){
+						addBehaviour(new TickerBehaviour(Me,100){
 							public void onTick(){
 								//Ordena la lista de médicos en función de su distancia
-								if(posiciones.size()>0)
-									msg.addReceiver((AID)posiciones.elementA(0));								
-								msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-								msg.setConversationId("CFM");
-								msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
-								send(msg);
-							}						
-							boolean done(){
-								true;
-							}
+								if(posiciones.size()>0){
+									final ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+									msg.addReceiver((AID)posiciones.elementAt(0));								
+									msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+									msg.setConversationId("CFM");
+									msg.setContent(" ( " + m_Movement.getPosition().x + " , " + m_Movement.getPosition().y + " , " + m_Movement.getPosition().z + " ) ( " + GetHealth() + " ) ");
+									send(msg);
+									stop();
+								}
+							}	
 						});
-						return true;
-					}
-				});
+						stop();					
+					}});
 
 			} else {
 				m_iMedicsCount = 0;
@@ -312,7 +371,7 @@ public class MySoldierVigiaSO extends CSoldier{
 					ServiceDescription sd = new ServiceDescription();
 					sd.setType("Escudo_Allied");
 					dfd.addServices(sd);
-					DFAgentDescription[] result = DFService.search(this, dfd);
+					DFAgentDescription[] result = DFService.search(Me, dfd);
 					if ( result.length > 0 ) {						
 						// Fill the REQUEST message
 						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -481,7 +540,7 @@ public class MySoldierVigiaSO extends CSoldier{
 		 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
 		 {
 			 if(nCurrent.getPadre()==null) esInicial=true;
-			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)-4),0,nCurrent.getPosZ()*8+((int)(Math.random()*8)-4)));
+			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)),0,nCurrent.getPosZ()*8+((int)(Math.random()*8))));
 			 nCurrent=nCurrent.getPadre();		 
 		 }
 		 Vector3D[] v3D=new Vector3D[lv3D.size()];

@@ -2,6 +2,10 @@ package student;
 
 
 import jade.core.AID;
+
+import java.util.Vector;
+import java.util.Scanner;
+
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
@@ -11,10 +15,12 @@ import jade.domain.FIPANames;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import es.upv.dsic.gti_ia.jgomas.CBasicTroop;
 import es.upv.dsic.gti_ia.jgomas.CMedic;
 import es.upv.dsic.gti_ia.jgomas.CPack;
 import es.upv.dsic.gti_ia.jgomas.CSight;
@@ -40,6 +46,7 @@ public class MyMedicEscudo extends CMedic {
 	private static final long serialVersionUID = 1L;
 	private CSight aliadoAseguir=null;
 	private CSight s=null;
+	private CBasicTroop Me = this;
 	
 	private Vector3D[] vVolverPath=new Vector3D [1000];
 	private boolean bHeVuelto=false;
@@ -105,8 +112,8 @@ public class MyMedicEscudo extends CMedic {
 		 */
 		public void action() {
 
-			System.out.println("Position:x:"+m_Movement.getPosition().x + " y: "+m_Movement.getPosition().y+" z: "+m_Movement.getPosition().z);
-			System.out.println("Distance to destination:x:"+( m_Movement.getDestination().x - m_Movement.getPosition().x )+ " y: "+ (m_Movement.getDestination().y - m_Movement.getPosition().y)+ " z: "+(m_Movement.getDestination().z - m_Movement.getPosition().z));
+			//System.out.println("Position:x:"+m_Movement.getPosition().x + " y: "+m_Movement.getPosition().y+" z: "+m_Movement.getPosition().z);
+			//System.out.println("Distance to destination:x:"+( m_Movement.getDestination().x - m_Movement.getPosition().x )+ " y: "+ (m_Movement.getDestination().y - m_Movement.getPosition().y)+ " z: "+(m_Movement.getDestination().z - m_Movement.getPosition().z));
 		}
 		
 	}
@@ -134,7 +141,7 @@ public class MyMedicEscudo extends CMedic {
 		    
 		    String sNewPosition=" ( "+ (int) x+" , "+ y+" , "+ (int) z+" ) ";
 		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,1500);	
-		    System.out.println("Mi destino sigue siendo "+m_Movement.getPosition().x+" y la z: "+m_Movement.getPosition().z);
+		    //System.out.println("Mi destino sigue siendo "+m_Movement.getPosition().x+" y la z: "+m_Movement.getPosition().z);
 		}
 	}
 		
@@ -162,7 +169,7 @@ class BehaviourSeguirAliado extends OneShotBehaviour {
 		    double y =aliadoAseguir.getPosition().y;
 		    
 		    String sNewPosition=" ( "+ (int) x+" , "+ (int) y+" , "+ (int) z+" ) ";
-		    System.out.println("Voy a seguir a "+Integer.toString(aliadoAseguir.getTeam()));
+		    //System.out.println("Voy a seguir a "+Integer.toString(aliadoAseguir.getTeam()));
 		    AddTask(CTask.TASK_GOTO_POSITION , getAID(), sNewPosition,2000);
 			}
 		}
@@ -217,7 +224,7 @@ protected void takeDown(){
 		msg.setConversationId("MS");
 		msg.setContent(mensaje);
 		send(msg);
-		System.out.println(getLocalName()+ ": Ha enviado un mensaje: "+mensaje);  		
+		//System.out.println(getLocalName()+ ": Ha enviado un mensaje: "+mensaje);  		
 	}
 	/**
 	 * Este método implementa la búsqueda de mensajeros, para luego comunicarme con ellos (en principio todo el equipo)
@@ -228,7 +235,7 @@ protected void takeDown(){
 		try {
 			DFAgentDescription dfd = new DFAgentDescription();
 			ServiceDescription sd = new ServiceDescription();
-			sd.setType("Mensajero_Axis");
+			sd.setType("Mensajero_Allied");
 			dfd.addServices(sd);
 			DFAgentDescription[] result = DFService.search(this, dfd);
 			if ( result.length > 0 ) {
@@ -248,34 +255,41 @@ protected void takeDown(){
 	 * En este método cada agente implementará el tratamiento adecuado de cada mensaje según el tema, el agente que lo envía y el contenido
 	 */
 	void mensajeRecibido(ACLMessage msg){
-		Scanner contenido = new Scanner(msg.getContent());
-		String siguiente = contenido.next(); 
-		if(siguiente = "Dame"){
-			String siguiente = contenido.next(); 
-			if(siguiente = "posicion"){
-				if (!bOcupado){
-					ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-					msg.addReceiver(msg.getSender());
-					msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-					msg.setConversationId("MS");
-					msg.setContent("Posicion "+this.getPosition().x+" "+this.getPosition().y+" "+this.getPosition().z);
-					send(msg);		
+		try{
+			Scanner contenido = new Scanner(msg.getContent());
+			if (contenido.hasNext()){
+				String siguiente = contenido.next(); 
+				if((siguiente != null) && (siguiente.equals("Dame"))){
+					siguiente = contenido.next(); 
+					if((siguiente != null) && (siguiente.equals("posicion"))){
+						if (!bOcupado){
+							ACLMessage msg2 = new ACLMessage(ACLMessage.REQUEST);
+							msg2.addReceiver(msg.getSender());
+							msg2.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+							msg2.setConversationId("MS");
+							msg2.setContent("Posicion "+this.m_Movement.getPosition().x+" "+this.m_Movement.getPosition().y+" "+this.m_Movement.getPosition().z);
+							send(msg2);		
+						}
+					}
+				}
+				else if((siguiente != null) && (siguiente.equals("CojoBandera"))){
+					String x = contenido.next();
+					String z = contenido.next();
+					String sNewPosition = "( "+x+" , 0.0 , "+z+" )";
+					System.out.println(sNewPosition);
+					AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+				}
+				else if((siguiente != null) && (siguiente.equals("PierdoBandera"))){
+					String x = contenido.next();
+					String z = contenido.next();
+					String sNewPosition = "( "+x+" , 0.0 , "+z+" )";
+					System.out.println(sNewPosition);
+					AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
 				}
 			}
 		}
-		else if(siguiente = "Posicion"){
-			posiciones.add(msg.getSender());
-			posiciones.add(new Vector3D(contenido.next(),contenido.next(),contenido.next()));
-		}
-		else if(siguiente = "CojoBandera"){
-			bModoBandera = true;
-			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
-			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
-		}
-		else if(siguiente = "PierdoBandera"){
-			bModoBandera = false;
-			String sNewPosition = "( "+contenido.next()+" , 0 , "+contenido.next()+" )";
-			AddTask(CTask.TASK_GOTO_POSITION, this.getAID(), sNewPosition, m_CurrentTask.getPriority() + 1);
+		catch(Exception e){
+			e.printStackTrace();
 		}
 	}
 
@@ -432,7 +446,7 @@ protected void takeDown(){
 	 */
 	protected void ObjectivePackTaken() {
 		//EnviarMensaje con la posicion
-		enviarMensaje("CojoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);	
+		enviarMensaje("CojoBandera "+ (int)m_Movement.getPosition().x+" "+(int)m_Movement.getPosition().z);	
 		addBehaviour(new CyclicBehaviour(){//Ver mensajes recibidos ciclicamente
 			public void action(){
 				try {
@@ -440,7 +454,7 @@ protected void takeDown(){
 					ServiceDescription sd = new ServiceDescription();
 					sd.setType("Escudo_Allied");
 					dfd.addServices(sd);
-					DFAgentDescription[] result = DFService.search(this, dfd);
+					DFAgentDescription[] result = DFService.search(Me, dfd);
 					if ( result.length > 0 ) {						
 						// Fill the REQUEST message
 						ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
@@ -453,7 +467,8 @@ protected void takeDown(){
 						}
 						msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
 						msg.setConversationId("MS");
-						msg.setContent("CojoBandera "+ m_Movement.getPosition().x+" "+m_Movement.getPosition().z);
+						String mensaje = "CojoBandera "+ (int)m_Movement.getPosition().x+" "+(int)m_Movement.getPosition().z;
+						msg.setContent(mensaje);
 						send(msg);
 					} 
 				} catch (FIPAException fe) {
@@ -545,7 +560,7 @@ protected void takeDown(){
 		bHeVuelto=false;
 		m_iAStarPathIndex=0;//inicilaizamos a 0
 		
-		System.out.println("La posicion inicial por getposition es "+m_Movement.getPosition().x+"y z es "+m_Movement.getPosition().z);
+		//System.out.println("La posicion inicial por getposition es "+m_Movement.getPosition().x+"y z es "+m_Movement.getPosition().z);
 		
 		Vector3D vNewDestination=new Vector3D(m_Movement.getPosition().x,0.0,m_Movement.getPosition().z);
 		
@@ -594,7 +609,7 @@ protected void takeDown(){
 		    //System.out.println("Ha entrado en el bucle");
 		    //System.out.println("Nodo Actual x:"+nodoActual.getPosX()+" y posicion z: "+nodoActual.getPosZ());
 		 }
-		 System.out.println("Ha salido");
+		 //System.out.println("Ha salido");
 		 boolean esInicial=false;
 		 for(int h=0;h<lCerrados.size();h++)
 		 {
@@ -608,7 +623,7 @@ protected void takeDown(){
 		 while(!esInicial)//meto las posiciones de los nodos en un array de Vector3D
 		 {
 			 if(nCurrent.getPadre()==null) esInicial=true;
-			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)-4),0,nCurrent.getPosZ()*8+((int)(Math.random()*8)-4)));
+			 lv3D.add(new Vector3D(nCurrent.getPosX()*8+((int)(Math.random()*8)),0,nCurrent.getPosZ()*8+((int)(Math.random()*8))));
 			 nCurrent=nCurrent.getPadre();		 
 		 }
 		 Vector3D[] v3D=new Vector3D[lv3D.size()];
@@ -639,8 +654,8 @@ protected void takeDown(){
 		 AddTask(CTask.TASK_WALKING_PATH, getAID(), posInit, 10000);
 		 
 		 m_Movement.setDestination(vNewDestination);
-		 System.out.println("la posicion inicial es "+vNewDestination.x +" y la z "+vNewDestination.z);
-		 System.out.println("El destino actual es "+m_Movement.getDestination().x+" y la z "+m_Movement.getDestination().z);
+		 //System.out.println("la posicion inicial es "+vNewDestination.x +" y la z "+vNewDestination.z);
+		 //System.out.println("El destino actual es "+m_Movement.getDestination().x+" y la z "+m_Movement.getDestination().z);
 		 
 		 return true;
 		 }
@@ -1101,7 +1116,7 @@ protected void takeDown(){
 		public void action () {
 		String msg = " ( " + x + " , " + y + " , " + z + " ) ";
 		AddTask( CTask.TASK_GOTO_POSITION, getAID(), msg, 2000);
-		System.out.println("New Destination: " + msg );
+		//System.out.println("New Destination: " + msg );
 		}
 		});
 		}
